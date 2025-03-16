@@ -456,6 +456,7 @@ body {
             item.addEventListener("touchstart", (event) => {
                 draggingItem = item;
                 item.classList.add("dragging");
+                item.style.zIndex = "1000"; // 👈 一番上に持ってくる
                 touchStartX = event.touches[0].clientX;
                 touchStartY = event.touches[0].clientY;
                 event.preventDefault();
@@ -573,6 +574,7 @@ body {
     function finishDragging() {
         if (!draggingItem) return;
         draggingItem.classList.remove("dragging");
+        draggingItem.style.zIndex = ""; // 👈 元の状態に戻す
         draggingItem = null;
     }
     
