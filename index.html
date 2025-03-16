@@ -448,6 +448,14 @@ function enableDragAndDrop(list) {
         item.addEventListener("touchend", (event) => {
             if (!draggingItem) return;
 
+            const currentTime = new Date().getTime();
+            if (currentTime - lastTapTime < 300) {  // 300ms以内ならダブルタップ
+                restoreToOriginalList(item);
+                event.preventDefault();
+                return;
+            }       
+            lastTapTime = currentTime;
+
             const touch = event.changedTouches[0];
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
             
@@ -462,13 +470,6 @@ function enableDragAndDrop(list) {
         item.addEventListener("dblclick", () => {
             restoreToOriginalList(item);
         });
-
-        // **スマホ用: 長押しで元に戻す**
-        let longPressTimer;
-        item.addEventListener("touchstart", () => {
-            longPressTimer = setTimeout(() => restoreToOriginalList(item), 500);
-        });
-        item.addEventListener("touchend", () => clearTimeout(longPressTimer));
     });
 
     list.addEventListener("dragover", (event) => {
