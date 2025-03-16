@@ -397,142 +397,169 @@ body {
 
 <script>
     const setlist = document.getElementById("setlist");
-    let draggingItem = null;
-    let touchStartY = 0;
-    let touchMoveY = 0;
-    const maxSongs = 24;
+let draggingItem = null;
+let touchStartY = 0;
+let touchMoveY = 0;
+const maxSongs = 24;
+const originalAlbumMap = new Map(); // 追加: 曲の元のアルバムを記憶
 
-    function enableDragAndDrop(list) {
-        list.querySelectorAll(".item").forEach(item => {
-            // PC用ドラッグ
-            item.addEventListener("dragstart", (event) => {
-                draggingItem = item;
-                item.classList.add("dragging");
-                event.dataTransfer.setData("text/plain", ""); // ドラッグのためのデータ
-            });
+function enableDragAndDrop(list) {
+    list.querySelectorAll(".item").forEach(item => {
+        // 元のリストを記憶
+        if (!originalAlbumMap.has(item)) {
+            originalAlbumMap.set(item, list);
+        }
 
-            item.addEventListener("dragend", () => {
-                finishDragging();
-            });
-
-            // スマホ用タッチドラッグ
-            item.addEventListener("touchstart", (event) => {
-                draggingItem = item;
-                item.classList.add("dragging");
-                touchStartY = event.touches[0].clientY;
-                event.preventDefault();
-            });
-
-            item.addEventListener("touchmove", (event) => {
-                if (!draggingItem) return;
-                event.preventDefault();
-                touchMoveY = event.touches[0].clientY;
-            });
-
-            item.addEventListener("touchend", (event) => {
-                if (!draggingItem) return;
-
-                const touch = event.changedTouches[0];
-                const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-                
-                if (dropTarget) {
-                    handleDrop(dropTarget, touch.clientY);
-                }
-
-                finishDragging();
-            });
+        // PC用ドラッグ
+        item.addEventListener("dragstart", (event) => {
+            draggingItem = item;
+            item.classList.add("dragging");
+            event.dataTransfer.setData("text/plain", ""); // ドラッグのためのデータ
         });
 
-        list.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            if (!draggingItem) return;
-
-            const closestItem = getClosestItem(event.clientY);
-            if (closestItem) {
-                const bounding = closestItem.getBoundingClientRect();
-                const offset = event.clientY - bounding.top;
-                if (offset > bounding.height / 2) {
-                    closestItem.after(draggingItem);
-                } else {
-                    closestItem.before(draggingItem);
-                }
-            }
-        });
-
-        list.addEventListener("drop", (event) => {
-            event.preventDefault();
-            if (!draggingItem) return;
-            handleDrop(event.target, event.clientY);
+        item.addEventListener("dragend", () => {
             finishDragging();
         });
-    }
 
-    function getClosestItem(y) {
-        const items = [...setlist.children];
-        return items.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function handleDrop(target, y) {
-        let dropList = setlist;
-
-        while (target && target !== document.body) {
-            if (target === setlist) {
-                dropList = setlist;
-                break;
-            }
-            target = target.parentElement;
-        }
-
-        if (dropList === setlist && setlist.children.length < maxSongs) {
-            const closestItem = getClosestItem(y);
-            if (closestItem) {
-                const bounding = closestItem.getBoundingClientRect();
-                const offset = y - bounding.top;
-                if (offset > bounding.height / 2) {
-                    closestItem.after(draggingItem);
-                } else {
-                    closestItem.before(draggingItem);
-                }
-            } else {
-                setlist.appendChild(draggingItem);
-            }
-        }
-    }
-
-    function finishDragging() {
-        if (!draggingItem) return;
-        draggingItem.classList.remove("dragging");
-        draggingItem = null;
-    }
-
-    function toggleMenu() {
-        const menu = document.getElementById("menu");
-        const menuButton = document.getElementById("menuButton");
-
-        menu.classList.toggle("open");
-        menuButton.classList.toggle("open");
-    }
-
-    function toggleAlbum(albumIndex) {
-        document.querySelectorAll(".album-content").forEach(content => {
-            if (content.id === "album" + albumIndex) {
-                content.classList.toggle("active");
-            } else {
-                content.classList.remove("active");
-            }
+        // スマホ用タッチドラッグ
+        item.addEventListener("touchstart", (event) => {
+            draggingItem = item;
+            item.classList.add("dragging");
+            touchStartY = event.touches[0].clientY;
+            event.preventDefault();
         });
+
+        item.addEventListener("touchmove", (event) => {
+            if (!draggingItem) return;
+            event.preventDefault();
+            touchMoveY = event.touches[0].clientY;
+        });
+
+        item.addEventListener("touchend", (event) => {
+            if (!draggingItem) return;
+
+            const touch = event.changedTouches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (dropTarget) {
+                handleDrop(dropTarget, touch.clientY);
+            }
+
+            finishDragging();
+        });
+
+        // **ダブルクリックで元のリストに戻す**
+        item.addEventListener("dblclick", () => {
+            restoreToOriginalList(item);
+        });
+
+        // **スマホ用: 長押しで元に戻す**
+        let longPressTimer;
+        item.addEventListener("touchstart", () => {
+            longPressTimer = setTimeout(() => restoreToOriginalList(item), 500);
+        });
+        item.addEventListener("touchend", () => clearTimeout(longPressTimer));
+    });
+
+    list.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        if (!draggingItem) return;
+
+        const closestItem = getClosestItem(event.clientY);
+        if (closestItem) {
+            const bounding = closestItem.getBoundingClientRect();
+            const offset = event.clientY - bounding.top;
+            if (offset > bounding.height / 2) {
+                closestItem.after(draggingItem);
+            } else {
+                closestItem.before(draggingItem);
+            }
+        }
+    });
+
+    list.addEventListener("drop", (event) => {
+        event.preventDefault();
+        if (!draggingItem) return;
+        handleDrop(event.target, event.clientY);
+        finishDragging();
+    });
+}
+
+function getClosestItem(y) {
+    const items = [...setlist.children];
+    return items.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function handleDrop(target, y) {
+    let dropList = setlist;
+
+    while (target && target !== document.body) {
+        if (target === setlist) {
+            dropList = setlist;
+            break;
+        }
+        target = target.parentElement;
     }
 
-    enableDragAndDrop(setlist);
-    document.querySelectorAll(".album-content").forEach(enableDragAndDrop);
+    if (dropList === setlist && setlist.children.length < maxSongs) {
+        const closestItem = getClosestItem(y);
+        if (closestItem) {
+            const bounding = closestItem.getBoundingClientRect();
+            const offset = y - bounding.top;
+            if (offset > bounding.height / 2) {
+                closestItem.after(draggingItem);
+            } else {
+                closestItem.before(draggingItem);
+            }
+        } else {
+            setlist.appendChild(draggingItem);
+        }
+    }
+}
+
+function finishDragging() {
+    if (!draggingItem) return;
+    draggingItem.classList.remove("dragging");
+    draggingItem = null;
+}
+
+// **元のリストに戻す処理**
+function restoreToOriginalList(item) {
+    const originalList = originalAlbumMap.get(item);
+    if (originalList) {
+        originalList.appendChild(item);
+    }
+}
+
+function toggleMenu() {
+    const menu = document.getElementById("menu");
+    const menuButton = document.getElementById("menuButton");
+
+    menu.classList.toggle("open");
+    menuButton.classList.toggle("open");
+}
+
+function toggleAlbum(albumIndex) {
+    document.querySelectorAll(".album-content").forEach(content => {
+        if (content.id === "album" + albumIndex) {
+            content.classList.toggle("active");
+        } else {
+            content.classList.remove("active");
+        }
+    });
+}
+
+enableDragAndDrop(setlist);
+document.querySelectorAll(".album-content").forEach(enableDragAndDrop);
+
 </script>
 
 
