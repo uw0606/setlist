@@ -753,17 +753,29 @@ document.querySelectorAll(".album-content").forEach(enableDragAndDrop);
 
 let activeScrollArea = null;
 
-document.getElementById("menu").addEventListener("touchstart", () => {
+document.getElementById("menu").addEventListener("touchstart", (event) => {
     activeScrollArea = "menu";
     document.getElementById("setlist").style.overflowY = "hidden";
     document.getElementById("menu").style.overflowY = "auto";
 });
 
-document.getElementById("setlist").addEventListener("touchstart", () => {
+document.getElementById("setlist").addEventListener("touchstart", (event) => {
     activeScrollArea = "setlist";
     document.getElementById("menu").style.overflowY = "hidden";
     document.getElementById("setlist").style.overflowY = "auto";
 });
+
+// **touchend ではなく touchmove で解除する**
+document.addEventListener("touchmove", (event) => {
+    if (activeScrollArea === "menu") {
+        document.getElementById("menu").style.overflowY = "auto";
+        document.getElementById("setlist").style.overflowY = "hidden";
+    } else if (activeScrollArea === "setlist") {
+        document.getElementById("menu").style.overflowY = "hidden";
+        document.getElementById("setlist").style.overflowY = "auto";
+    }
+});
+
 
 document.addEventListener("touchend", () => {
     document.getElementById("menu").style.overflowY = "auto";
