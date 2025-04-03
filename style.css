@@ -1,0 +1,627 @@
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+#setlist {
+  list-style: none;
+  padding: 10px;
+  min-height: 200px;
+  background: #f0f0f0;
+  border: 1px solid #aaa;
+  margin: 10px 0;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.item {
+  padding: 10px;
+  margin: 5px;
+  border: 1px solid #aaa;
+  cursor: grab;
+  color: white;
+  user-select: none; /* 文字選択を禁止 */
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+}
+
+.dragging {
+  opacity: 0.5;
+}
+ 
+/* ハンバーガーメニュー */
+.menu-button {   
+  display: block;
+  position: fixed;
+  top: 25px;
+  right: 30px;
+  width: 30px;
+  height: 30px;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.menu-button span {
+  position: absolute;
+  display: block;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background-color: #333;
+  transition: all 0.5s;
+  background-origin: 4px;
+}
+
+.menu-button span:nth-child(1){
+  top:4px;
+}
+.menu-button span:nth-child(2){
+  top:14px;
+}
+.menu-button span:nth-child(3){
+  bottom: 4px;
+}
+
+.menu {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 300px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0px 6px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  transition: right 0.3s ease-in-out;
+  z-index: 99;
+  overflow-y: auto;/* 追加: メニューが長くなるとスクロールバーが表示される */
+  -webkit-overflow-scrolling: touch; /* iOS でスムーズなスクロールを有効化 */
+}
+.menu.open {
+    right: 0;
+}
+
+/* ✖ ボタン */
+.close-button {
+  position: absolute;
+  top: 25px;
+  right: 30px;
+  width: 30px;
+  height: 30px;
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  line-height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.close-button span {
+  position: absolute;
+  display: block;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background-color: #333;
+  transition: all 0.5s;
+  background-origin: 4px;
+}
+
+.menu-button.open span:nth-child(1) {
+  transform: translateY(10px) rotate(-315deg);
+}
+.menu-button.open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-button.open span:nth-child(3) {
+  transform: translateY(-10px) rotate(315deg);
+}
+
+
+/* アルバムリスト */
+.album-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  user-select: none;
+}
+.album-list li {
+  padding: 10px;
+  background: #fffefe;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+}
+.album-list li:hover {
+  background: #ddd;
+}
+
+/* アルバムごとの曲リスト */
+.album-content {
+  display: none;
+  padding: 5px;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  margin: 0;
+  list-style: none;
+}
+.album-content.active {
+  display: block;
+}
+
+
+/* アルバム1の色設定 */
+.album-list li.album1-tab { background-color: #efefef; } /* タブの色 */
+.album1 { --album-color: #efefef; } /* アルバム1の基準色 */
+
+/* アルバム2の色設定 */
+.album-list li.album2-tab { background-color: rgba(255, 255, 2, 0.733); } /* タブの色 */
+.album2 { --album-color: rgba(255, 255, 2, 0.733); } /* アルバム2の基準色 */
+
+/* アルバム3の色設定 */
+.album-list li.album3-tab { 
+  background-color: #000000; 
+  color: #ffffff;
+} /* タブの色 */
+.album3 { --album-color: #000000; } /* アルバム3の基準色 */
+
+/* アルバム4の色設定 */
+.album-list li.album4-tab { background-color: #018221; } /* タブの色 */
+.album4 { --album-color: #018221; } /* アルバム4の基準色 */
+
+/* アルバム5の色設定 */
+.album-list li.album5-tab { 
+  background-color: #9607a1;
+  color: #ffffff; 
+} /* タブの色 */
+.album5 { --album-color: #9607a1; } /* アルバム5の基準色 */
+
+/* アルバム6の色設定 */
+.album-list li.album6-tab { background-color: rgb(78, 84, 84);
+  color: #ffffff;
+} /* タブの色 */
+.album6 { --album-color: rgb(78, 84, 84); } /* アルバム6の基準色 */
+
+/* アルバム7の色設定 */
+.album-list li.album7-tab { background-color: #04a6ec;
+  color: #ffffff;
+} /* タブの色 */
+.album7 { --album-color: #ff6347; } /* アルバム7の基準色 */
+
+/* アルバム8の色設定 */
+.album-list li.album8-tab { background-color: #f3ab37; } /* タブの色 */
+.album8 { --album-color: #f3ab37; } /* アルバム8の基準色 */
+
+/* アルバム9の色設定 */
+.album-list li.album9-tab { background-color: #64dc68; } /* タブの色 */
+.album9 { --album-color: #64dc68; } /* アルバム9の基準色 */
+
+/* アルバム10の色設定 */
+.album-list li.album10-tab { background-color: #ff07de; } /* タブの色 */
+.album10 { --album-color: #ff07de; } /* アルバム10の基準色 */
+
+/* アルバム11の色設定 */
+.album-list li.album11-tab { background-color: #ff0000;
+  color: #ffffff;
+} /* タブの色 */
+.album11 { --album-color: #ff0000; } /* アルバム11の基準色 */
+
+/* アルバム12の色設定 */
+.album-list li.album12-tab { background-color: #ff6200; } /* タブの色 */
+.album12 { --album-color: #ff6200; } /* アルバム12の基準色 */
+
+/* アルバム13の色設定 */
+.album-list li.album13-tab { background-color: #41fff9; } /* タブの色 */
+.album13 { --album-color: #41fff9; } /* アルバム13の基準色 */
+
+/* アルバム14の色設定 */
+.album-list li.album14-tab { background-color: #ffffff; } /* タブの色 */
+.album14 { --album-color: #ffffff; } /* アルバム14の基準色 */
+
+/* リストアイテムのスタイル */
+.album-list li.album1, .album1 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album2, .album2 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album3, .album3 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album4, .album4 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album5, .album5 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album6, .album6 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album7, .album7 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album8, .album8 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album9, .album9 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album10, .album10 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album11, .album11 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album12, .album12 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album13, .album13 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+.album-list li.album14, .album14 {
+    position: relative;
+    background: white; /* 背景を白 */
+    color: black; /* 文字を黒 */
+    padding-left: 30px; /* 左の色スペースを確保 */
+    border: 1px solid #aaa;
+}
+
+/* 左端のカラー帯 */
+.album-list li.album1::before, .album1::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #efefef; /* アルバム1の色 */
+}
+
+.album-list li.album2::before, .album2::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: rgba(255, 255, 2, 0.733); /* アルバム2の色 */
+}
+
+.album-list li.album3::before, .album3::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #000000; /* アルバム3の色 */
+}
+
+.album-list li.album4::before, .album4::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #018221; /* アルバム4の色 */
+}
+
+.album-list li.album5::before, .album5::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #9607a1; /* アルバム5の色 */
+}
+
+.album-list li.album6::before, .album6::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: rgb(78, 84, 84); /* アルバム6の色 */
+}
+
+.album-list li.album7::before, .album7::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #2a9fed; /* アルバム7の色 */
+}
+
+.album-list li.album8::before, .album8::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #f3ab37; /* アルバム8の色 */
+}
+
+.album-list li.album9::before, .album9::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #64dc68; /* アルバム9の色 */
+}
+
+.album-list li.album10::before, .album10::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #ff07de; /* アルバム10の色 */
+}
+
+.album-list li.album11::before, .album11::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #ff0000; /* アルバム11の色 */
+}
+
+.album-list li.album12::before, .album12::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #ff6200; /* アルバム12の色 */
+}
+
+.album-list li.album13::before, .album13::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #41fff9; /* アルバム13の色 */
+}
+
+.album-list li.album14::before, .album14::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background-color: #ffffff; /* アルバム14の色 */
+}
+
+/* チェックボックスと曲名のスタイル */
+.setlist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  border: 1px solid #ccc;
+  margin: 5px 0;
+}
+
+.setlist-item .song-info {
+  display: flex;
+  align-items: center;
+}
+
+.setlist-item input[type="checkbox"] {
+  margin-left: 10px; /* チェックボックスを右側に配置するため、margin-leftに変更 */
+}
+
+
+
+
+/* デフォルトのレイアウトがデスクトップ向けに最適化されているので、スマホ向けにスタイルを変更します */
+        
+  /* スマホ向け */
+  @media (max-width: 767px) {
+    body {
+        padding: 0;
+        margin: 1
+;
+    }
+
+    h2, h3 {
+      user-select: none; /* 文字選択を禁止 */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .menu-button {
+        right: 15px; /* メニューアイコンを少し右に寄せる */
+        top: 15px;  /* メニューアイコンを少し上に寄せる */
+    }
+
+    .menu {
+        width: 250px;  /* メニューの幅を縮小 */
+    }
+
+    .album-list li {
+        font-size: 14px;  /* スマホサイズに合わせて文字サイズを縮小 */
+    }
+
+    .album1-tab, .album2-tab, .album3-tab, .album4-tab, .album5-tab, .album6-tab, .album7-tab, 
+    .album8-tab, .album9-tab, .album10-tab, .album11-tab, .album12-tab, .album13-tab, .album14-tab {
+      user-select: none; /* 文字選択を禁止 */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    
+
+    .album-list li.album1-tab, .album-list li.album2-tab, .album-list li.album3-tab,
+    .album-list li.album4-tab, .album-list li.album5-tab, .album-list li.album6-tab
+    .album-list li.album7-tab, .album-list li.album8-tab, .album-list li.album9-tab
+    .album-list li.album10-tab, .album-list li.album11-tab, .album-list li.album12-tab
+    .album-list li.album13-tab, .album-list li.album14-tab {
+        padding: 8px 15px;  /* タブの内側に少し余白を追加 */
+    }
+
+    .album-list {
+        padding: 0;
+    }
+
+    .album-content {
+        padding: 5px;
+    }
+
+    /* メニュー内のリストアイテムのスタイル */
+    .album-list li {
+        padding: 8px 15px;
+    }
+
+    /* タブごとの色帯を細く */
+    .album-list li::before {
+        width: 15px;
+    }
+
+    /* セットリスト */
+    #setlist {
+        max-height: none; /* スマホではスクロールの制限を解除 */
+    }
+
+    /* アイテムをドラッグしたときのスタイル */
+    .dragging {
+        opacity: 0.7;
+    }
+
+    /* セットリストのアイテムに余白をつけて見やすくする */
+    .item {
+        padding-left: 30px;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .item.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+}
+}
+
+/* スマホ用のアニメーション（フェードイン + スライドイン） */
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* アルバムからセットリストにアイテムがスライドして追加されるアニメーション */
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.header-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .send-all-button {
+            position: absolute;
+            left: 150px; /* h2 の右隣 300px に配置 */
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            padding: 5px 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+
+        .setlist { list-style: none; padding: 0; margin-top: 20px; }
+        .setlist-item { display: flex; justify-content: space-between; padding: 8px; border: 1px solid #ccc; margin: 5px 0; }
+        .send-button { cursor: pointer; background: none; border: none; font-size: 18px; }
+  
