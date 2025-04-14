@@ -275,7 +275,8 @@ document.getElementById('shareSetlistButton').addEventListener('click', () => {
     return response.json();
   })
   .then(data => {
-    const shareLink = `http://localhost:3000/setlist/shared?id=${data.shareId}`;
+    // 現在のサイトのオリジンを取得し、パスと共有 ID を結合
+    const shareLink = `${window.location.origin}${window.location.pathname}?id=${data.shareId}`;
     navigator.clipboard.writeText(shareLink);
     alert('共有リンクをクリップボードにコピーしました。');
   })
