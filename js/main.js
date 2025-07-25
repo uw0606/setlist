@@ -20,8 +20,6 @@ let activeTouchSlot = null; // モバイルでのドロップゾーンハイラ�
 let rafId = null;
 
 
-
-
 /*------------------------------------------------------------------------------------------------------------*/
 
 
@@ -436,6 +434,7 @@ function getCurrentState() {
  * セットリストのスロットを曲情報で埋める。
  * @param {Element} slotElement - 対象のスロット要素 (li.setlist-slot)
  * @param {object} songData - スロットに入れる曲のデータオブジェクト
+ * 例: { itemId: "...", name: "曲名", albumClass: "...", short: true/false, seChecked: true/false, drumsoloChecked: true/false, hasShortOption: true/false, hasSeOption: true/false, hasDrumsoloOption: true/false, rGt: "D", lGt: "D", bass: "D", bpm: "180", chorus: "あり" }
  */
 function fillSlotWithItem(slotElement, songData) {
   console.log(`[fillSlotWithItem] Filling slot ${slotElement.dataset.slotIndex} with item ID: ${songData.itemId}`);
@@ -762,6 +761,8 @@ function processDrop(draggedElement, dropTargetSlot, originalSetlistSlot = null)
         // アルバムからドラッグされた場合は、getSlotItemData で基本的なデータを取得
         draggedItemData = getSlotItemData(draggedElement);
 
+        // ★ドラムソロに関する追加: アルバムからのドラッグの場合、元のアルバムアイテムのオプション情報を引き継ぐ ★
+        // draggedElement (クローン) にはすでに必要なデータ属性があるはずだが、念のため元のアルバムアイテムからも確認
         const originalAlbumItem = document.querySelector(`.album-content .item[data-item-id="${itemId}"]`);
         if (originalAlbumItem) {
             draggedItemData.hasShortOption = originalAlbumItem.dataset.isShortVersion === 'true';
@@ -964,82 +965,47 @@ function handleTouchStart(event) {
  * タッチ移動時の処理
  */
 function handleTouchMove(event) {
-    if (event.touches.length === 1) {
-        const touch = event.touches[0];
-        const currentClientX = touch.clientX;
-        const currentClientY = touch.clientY;
+    if (!isDragging || !currentTouchDraggedClone) return;
 
-        // ドラッグがまだ開始されていない場合
-        if (!isDragging) {
-            // タッチ開始地点からの移動距離を計算
-            const deltaX = Math.abs(currentClientX - initialTouchX);
-            const deltaY = Math.abs(currentClientY - initialTouchY);
+    event.preventDefault();
 
-            // TAP_MOVE_THRESHOLD を超えたらドラッグ開始とみなす
-            // TAP_MOVE_THRESHOLD はグローバル定数として定義されていることを確認してください（例: const TAP_MOVE_THRESHOLD = 10;）
-            if (deltaX > TAP_MOVE_THRESHOLD || deltaY > TAP_MOVE_THRESHOLD) {
-                // ドラッグ開始に必要な要素が揃っているか確認
-                // originalSetlistSlot は handleTouchStart で設定されています
-                const elementToDrag = originalSetlistSlot || document.querySelector(`.album-content .item[data-item-id="${draggingItemId}"]`);
-                
-                if (elementToDrag && draggingItemId) {
-                    event.preventDefault(); // ここで初めてスクロールを抑制
-
-                    // クローン作成。クローンの左上隅が指の真下に来るようにオフセットを考慮
-                    // touchStartX, touchStartY は handleTouchStart で設定されています
-                    createTouchDraggedClone(elementToDrag, currentClientX - touchStartX, currentClientY - touchStartY, draggingItemId);
-                    
-                    isDragging = true; // ドラッグ開始フラグを立てる
-                    console.log("[handleTouchMove] Dragging initiated by movement (threshold exceeded). Preventing default scroll.");
-                } else {
-                    console.warn("[handleTouchMove] Movement detected, but cannot initiate drag (element missing or no draggingItemId). Allowing scroll.");
-                    // ドラッグ開始条件を満たさない場合は、引き続きスクロールを許可
-                    return; // preventDefault() を呼ばない
-                }
-            } else {
-                // 閾値を超えていない場合は、スクロールを許可し続ける
-                return; // preventDefault() を呼ばない
-            }
-        }
-
-        // isDragging が true の場合（ドラッグ中）は、常に preventDefault を呼び出し続ける
-        // そしてクローンの位置を更新する
-        if (isDragging && currentTouchDraggedClone) {
-            event.preventDefault(); // ドラッグ中はスクロールを抑制
-
-            if (rafId !== null) {
-                cancelAnimationFrame(rafId);
-            }
-
-            rafId = requestAnimationFrame(() => {
-                if (!currentTouchDraggedClone) {
-                    rafId = null;
-                    return;
-                }
-                
-                // ⭐修正: クローンの位置を更新。指の絶対位置から、クローン作成時に計算したオフセットを引く
-                currentTouchDraggedClone.style.left = (currentClientX - touchStartX) + 'px';
-                currentTouchDraggedClone.style.top = (currentClientY - touchStartY) + 'px';
-
-                const targetElement = document.elementFromPoint(currentClientX, currentClientY);
-                const newDropZone = targetElement ? targetElement.closest('.setlist-slot') : null;
-
-                if (originalSetlistSlot && newDropZone && newDropZone.dataset.slotIndex === originalSetlistSlot.dataset.slotIndex) {
-                    // ドラッグ元スロットに戻った場合、ハイライトを解除
-                    if (currentDropZone) {
-                        currentDropZone.classList.remove('drag-over');
-                    }
-                    currentDropZone = null;
-                } else if (newDropZone !== currentDropZone) {
-                    if (currentDropZone) currentDropZone.classList.remove('drag-over');
-                    if (newDropZone) newDropZone.classList.add('drag-over');
-                    currentDropZone = newDropZone;
-                    console.log(`[handleTouchMove] Drop zone changed to: ${newDropZone ? newDropZone.dataset.slotIndex : 'None'}`);
-                }
-                rafId = null;
-            });
-        }
+    if (rafId !== null) {
+        cancelAnimationFrame(rafId);
     }
+
+    rafId = requestAnimationFrame(() => {
+        if (!currentTouchDraggedClone) {
+            rafId = null;
+            return;
+        }
+        const touch = event.touches[0];
+        const newX = touch.clientX;
+        const newY = touch.clientY;
+
+        const cloneRect = currentTouchDraggedClone.getBoundingClientRect();
+        currentTouchDraggedClone.style.left = (newX - cloneRect.width / 2) + 'px';
+        currentTouchDraggedClone.style.top = (newY - cloneRect.height / 2) + 'px';
+
+        const targetElement = document.elementFromPoint(newX, newY);
+        const newDropZone = targetElement ? targetElement.closest('.setlist-slot') : null;
+
+        if (originalSetlistSlot && newDropZone && newDropZone.dataset.slotIndex === originalSetlistSlot.dataset.slotIndex) {
+            if (currentDropZone) {
+                currentDropZone.classList.remove('drag-over');
+            }
+            currentDropZone = null;
+            rafId = null;
+            return;
+        }
+
+        if (newDropZone !== currentDropZone) {
+            if (currentDropZone) currentDropZone.classList.remove('drag-over');
+            if (newDropZone) newDropZone.classList.add('drag-over');
+            currentDropZone = newDropZone;
+        }
+
+        rafId = null;
+    });
 }
 
 
@@ -1211,49 +1177,47 @@ function createTouchDraggedClone(originalElement, initialX, initialY, itemIdToCl
 function finishDragging() {
   console.log("[finishDragging] Initiating drag operation finalization.");
 
-  // PCドラッグ中の要素に 'dragging' クラスがあれば削除
   if (currentPcDraggedElement && setlist.contains(currentPcDraggedElement)) {
     currentPcDraggedElement.classList.remove("dragging");
     console.log(`[finishDragging] Removed 'dragging' class for PC setlist item: ${currentPcDraggedElement.dataset.itemId || 'N/A'}`);
   }
 
-  // モバイルのクローン要素があれば削除
   if (currentTouchDraggedClone && currentTouchDraggedClone.parentNode === document.body) {
     currentTouchDraggedClone.remove();
     console.log("[finishDragging] Removed remaining currentTouchDraggedClone (mobile clone) from body.");
   }
-  currentTouchDraggedClone = null; // クローン要素の参照をクリア
+  currentTouchDraggedClone = null;
 
-  // ドラッグ開始時の元のセットリストスロット (originalSetlistSlot) の状態を確実にリセット
-  if (originalSetlistSlot) {
-      originalSetlistSlot.classList.remove('placeholder-slot'); // プレースホルダー状態を解除
-      // ⭐︎ ここを修正します：元のスロットの visibility を常に元に戻す ⭐︎
-      originalSetlistSlot.style.visibility = ''; 
-      
-      console.log(`[finishDragging] Restored visibility and removed placeholder for originalSetlistSlot: ${originalSetlistSlot.dataset.slotIndex}.`);
-      
-      // 保存していた元のアイテムデータがあれば削除
+  // originalSetlistSlot がプレースホルダー状態であれば、一時的なスタイルを解除する
+  if (originalSetlistSlot && originalSetlistSlot.classList.contains('placeholder-slot')) {
+      originalSetlistSlot.classList.remove('placeholder-slot');
+      // ✅ 修正: setlist-item クラスが残っている場合のみ visibility を戻す
+      if (originalSetlistSlot.classList.contains('setlist-item')) {
+          originalSetlistSlot.style.visibility = '';
+          console.log(`[finishDragging] Restored visibility for originalSetlistSlot (still has item): ${originalSetlistSlot.dataset.slotIndex}.`);
+      } else {
+          // アイテムが既にクリアされている（移動または削除の場合）
+          originalSetlistSlot.style.visibility = ''; // clearSlotContentで既に設定済みだが念のため
+          console.log(`[finishDragging] OriginalSetlistSlot ${originalSetlistSlot.dataset.slotIndex} was cleared, ensuring visibility is normal.`);
+      }
       if (originalSetlistSlot._originalItemData) {
           delete originalSetlistSlot._originalItemData;
       }
   }
 
-  // すべてのセットリストスロットからドラッグ関連のクラスを削除し、opacityをリセット
   setlist.querySelectorAll('.setlist-slot').forEach(slot => {
     slot.classList.remove('drag-over', 'active-drop-target'); 
     slot.style.opacity = '';
   });
   console.log("[finishDragging] Removed drag-related classes from all setlist slots.");
 
-  // 全てのグローバルなドラッグ関連変数をリセット
   currentDropZone = null;
   activeTouchSlot = null;
   currentPcDraggedElement = null;
   draggingItemId = null; 
   isDragging = false;
-  originalSetlistSlot = null; // 参照を完全にクリア
+  originalSetlistSlot = null;
 
-  // タイマーやアニメーションフレームのIDがあればクリア
   if (touchTimeout) { 
       clearTimeout(touchTimeout);
       touchTimeout = null;
@@ -1263,7 +1227,6 @@ function finishDragging() {
       rafId = null;
   }
 
-  // セットリスト内のアイテムに基づいて、アルバムメニューの表示を更新
   hideSetlistItemsInMenu();
 
   console.log("[finishDragging] Drag operation finalized. All global drag states reset.");
@@ -1285,59 +1248,61 @@ function finishDragging() {
  * @param {Event} event - イベントオブジェクト
  */
 function handleDoubleClick(event) {
-    const item = event.target.closest(".item") || event.target.closest(".setlist-slot.setlist-item");
-    if (!item) {
-        console.log("[handleDoubleClick] No item found for double click.");
-        finishDragging(); // <-- ここに追加
-        return;
+  const item = event.target.closest(".item") || event.target.closest(".setlist-slot.setlist-item");
+  if (!item) {
+    console.log("[handleDoubleClick] No item found for double click.");
+    finishDragging();
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  console.log(`[handleDoubleClick] Double click on item ID: ${item.dataset.itemId || 'N/A'}`);
+
+  const isInsideSetlist = setlist.contains(item) && item.classList.contains('setlist-item');
+
+  if (isInsideSetlist) {
+    console.log("[handleDoubleClick] Item is in setlist. Restoring to original list.");
+    restoreToOriginalList(item);
+  } else {
+    console.log("[handleDoubleClick] Item is in album list. Attempting to add to setlist.");
+    const emptySlot = Array.from(setlist.children).find(slot => !slot.classList.contains('setlist-item'));
+    
+    if (!emptySlot) {
+      showMessageBox('セットリストは最大曲数に達しています。');
+      console.log("[handleDoubleClick] Setlist is full.");
+      finishDragging();
+      return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
-    console.log(`[handleDoubleClick] Double click on item ID: ${item.dataset.itemId || 'N/A'}`);
+    if (!setlist.querySelector(`.setlist-slot.setlist-item[data-item-id="${item.dataset.itemId}"]`)) {
+      const originalList = item.parentNode;
+      originalAlbumMap.set(item.dataset.itemId, originalList ? originalList.id : null); 
+      console.log(`[handleDoubleClick] Original list for ${item.dataset.itemId} set to: ${originalList ? originalList.id : 'null'}`);
+      
+      item.style.visibility = 'hidden'; 
+      console.log(`[handleDoubleClick] Hiding original album item: ${item.dataset.itemId}`);
 
-    const isInsideSetlist = setlist.contains(item) && item.classList.contains('setlist-item');
-
-    if (isInsideSetlist) {
-        console.log("[handleDoubleClick] Item is in setlist. Restoring to original list.");
-        restoreToOriginalList(item);
+      const itemData = getSlotItemData(item);
+      // ★ドラムソロに関する追加: アルバムアイテムのオプション情報をitemDataに追加 ★
+      if (itemData) {
+        // アルバムアイテムのdatasetから直接オプションの有無を取得し、itemDataにマージ
+        itemData.hasShortOption = item.dataset.isShortVersion === 'true';
+        itemData.hasSeOption = item.dataset.hasSeOption === 'true';
+        itemData.hasDrumsoloOption = item.dataset.hasDrumsoloOption === 'true'; // ★追加: ドラムソロオプションの有無
+        
+        fillSlotWithItem(emptySlot, itemData);
+        console.log(`[handleDoubleClick] Item ${item.dataset.itemId} added to slot ${emptySlot.dataset.slotIndex}`);
+      } else {
+        console.error("[handleDoubleClick] Failed to get item data for double clicked album item.");
+      }
     } else {
-        console.log("[handleDoubleClick] Item is in album list. Attempting to add to setlist.");
-        const emptySlot = Array.from(setlist.children).find(slot => !slot.classList.contains('setlist-item'));
-
-        if (!emptySlot) {
-            showMessageBox('セットリストは最大曲数に達しています。');
-            console.log("[handleDoubleClick] Setlist is full.");
-            finishDragging();
-            return;
-        }
-
-        if (!setlist.querySelector(`.setlist-slot.setlist-item[data-item-id="${item.dataset.itemId}"]`)) {
-            const originalList = item.parentNode;
-            originalAlbumMap.set(item.dataset.itemId, originalList ? originalList.id : null);
-            console.log(`[handleDoubleClick] Original list for ${item.dataset.itemId} set to: ${originalList ? originalList.id : 'null'}`);
-
-            item.style.visibility = 'hidden';
-            console.log(`[handleDoubleClick] Hiding original album item: ${item.dataset.itemId}`);
-
-            const itemData = getSlotItemData(item);
-            if (itemData) {
-                itemData.hasShortOption = item.dataset.isShortVersion === 'true';
-                itemData.hasSeOption = item.dataset.hasSeOption === 'true';
-                itemData.hasDrumsoloOption = item.dataset.hasDrumsoloOption === 'true';
-
-                fillSlotWithItem(emptySlot, itemData);
-                console.log(`[handleDoubleClick] Item ${item.dataset.itemId} added to slot ${emptySlot.dataset.slotIndex}`);
-            } else {
-                console.error("[handleDoubleClick] Failed to get item data for double clicked album item.");
-            }
-        } else {
-            console.log(`[handleDoubleClick] Item ${item.dataset.itemId} already in setlist. Doing nothing.`);
-        }
+        console.log(`[handleDoubleClick] Item ${item.dataset.itemId} already in setlist. Doing nothing.`);
     }
-    finishDragging(); // <-- ここに追加
+  }
+  finishDragging(); 
 }
-
+document.addEventListener("dblclick", handleDoubleClick);
 
 /*------------------------------------------------------------------------------------------------------------*/
 
@@ -1434,6 +1399,8 @@ function shareSetlist() {
         let songListText = "";
         let itemNo = 1; // 共有テキスト用の連番カウンタ
 
+        // album1として扱うdata-item-idのリスト
+        // これはアルバム1のアイテムが特別なフォーマット（インデント）で表示されるためのロジックです。
         const album1ItemIds = ['album1-001', 'album1-002', 'album1-004', 'album1-005', 'album1-006', 'album1-007', 'album1-008', 'album1-009', 'album1-0010', 'album1-0011', 'album1-0012', 'album1-013'];
 
         if (setlistItems.length > 0) {
@@ -1920,6 +1887,7 @@ function loadSetlistState() {
 
 
 /*------------------------------------------------------------------------------------------------------------*/
+
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("[DOMContentLoaded] Page loaded. Initializing drag and drop, date pickers, and modals.");
