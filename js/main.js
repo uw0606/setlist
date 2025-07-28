@@ -29,7 +29,7 @@ let currentTouchDraggedOriginalElement = null; // ★追加：モバイルのタ
 const album1ItemIds = [
     'album1-001', 'album1-002', 'album1-004', 'album1-005', 'album1-006',
     'album1-007', 'album1-008', 'album1-009', 'album1-010', 'album1-011',
-    'album1-012', 'album1-013'
+    'album1-003', 'album1-012', 'album1-013' // 修正済み：album1-003を追加
 ];
 
 // Firebaseの初期化（これはHTMLまたは別のJSファイルで一度だけ行う必要があります）
@@ -162,6 +162,10 @@ function clearSlotContent(slotElement) {
 
     // イベントリスナーの再設定 (クリア後のスロット状態に合わせて更新)
     enableDragAndDrop(slotElement); // ★追加：クリア後もイベントリスナーを有効にする
+
+    // スロットが空になったらpointer-eventsをnoneにする
+    slotElement.style.pointerEvents = 'none';
+    slotElement.style.touchAction = 'none';
 
     console.log(`[clearSlotContent] Slot ${slotElement.dataset.slotIndex} cleared successfully.`);
 }
