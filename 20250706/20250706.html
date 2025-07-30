@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>セットリスト</title>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="20250706.css"/>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
@@ -27,6 +27,7 @@
   </script>
 </head>
 <body>
+  
     
 
 <div class="header-container">
@@ -198,7 +199,7 @@
 
     <li class="album2-tab" onclick="toggleAlbum(2)">Timeless</li>
 <ul class="album-content" id="album2">
-    <li class="item album2" draggable="true" data-item-id="album2-001" data-song-name="CHANCE!" data-is-short-version="true" data-has-se-option="true" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="128" data-chorus="">CHANCE!</li>
+    <li class="item album2" draggable="true" data-item-id="album2-001" data-song-name="CHANCE!" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="128" data-chorus="">CHANCE!</li>
     <li class="item album2" draggable="true" data-item-id="album2-002" data-song-name="トキノナミダ" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="198" data-chorus="">トキノナミダ</li>
     <li class="item album2" draggable="true" data-item-id="album2-003" data-song-name="Rush" data-r-gt="Drop C#" data-l-gt="Drop C#" data-bass="5 半↓" data-bpm="170" data-chorus="">Rush</li>
     <li class="item album2" draggable="true" data-item-id="album2-004" data-song-name="D-tecnoLife" data-r-gt="Drop B" data-l-gt="Drop C#" data-bass="5 REG" data-bpm="168" data-chorus="">D-tecnoLife</li>
@@ -462,10 +463,10 @@
 
 <div id="pastSetlistsModal" class="modal-overlay">
     <div class="modal-content">
-        <button class="close-button" id="closePastSetlistsModalButton">&times;</button>
+        <button class="close-button">&times;</button>
         <h2>過去セットリスト</h2>
         <div class="past-years-grid">
-            <button class="past-year-item" data-year="2025" id="open2025FromPastModalButton">2025年</button>
+            <button class="past-year-item" data-year="2025">2025年</button>
             <button class="past-year-item" data-year="2024">2024年</button>
             <button class="past-year-item" data-year="2023">2023年</button>
             <button class="past-year-item" data-year="2022">2022年</button>
@@ -475,6 +476,8 @@
     </div>
 </div>
 
+</div>
+
 <div id="year2025DetailModal" class="modal-overlay">
     <div class="modal-content">
         <button class="close-button" id="close2025DetailModalButton">×</button>
@@ -482,19 +485,17 @@
         <div class="setlist-links">
             <p><a href="https://uw0606.github.io/setlist/?shareId=-OUh4WiuKLEJosv3S9Si" class="setlist-link" data-setlist-date="2025/2/5" data-setlist-venue="KT Zepp Yokohama">2025/2/5 KT Zepp Yokohama</a></p>
             <p><a href="#" class="setlist-link" data-setlist-date="2025/2/17" data-setlist-venue="Zepp Osaka Bayside">2025/2/17 Zepp Osaka Bayside</a></p>
-            <p><a href="20250706/20250706.html" class="setlist-link" data-setlist-date="2025/2/17" data-setlist-venue="Zepp Osaka Bayside">2025/2/17 Zepp Osaka Bayside</a></p>
         </div>
     </div>
 </div>
-
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 
-    <script src="fonts.js"></script>
+    <script src="../fonts.js"></script>
 
-    <script src="js/main.js"></script>
+    <script src="20250706.js"></script>
 
 </body>
 
