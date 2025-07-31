@@ -1,0 +1,2167 @@
+// =============================================================================
+// グローバル変数とDOM要素の参照
+// =============================================================================
+
+let currentPcDraggedElement = null; // PCドラッグ中に参照する元の要素（主にアルバムからドラッグする際のクローン）
+let currentTouchDraggedClone = null; // ★追加：タッチドラッグ中に動かすクローン要素
+let draggingItemId = null; // ドラッグ中のアイテムID (PC/Mobile共通)
+let touchStartX = 0;
+let touchStartY = 0;
+let lastTapTime = 0;
+let isDragging = false; // 現在ドラッグ中かどうかのフラグ (タッチドラッグ用)
+let touchTimeout = null; // setTimeout のIDを保持する変数
+const originalAlbumMap = new Map(); // 各アイテムの元のアルバムIDを保持するMap
+let originalSetlistSlot = null; // PC/Mobile共通で、セットリスト内でドラッグ開始された「元のスロット要素」を指す
+
+const setlist = document.getElementById("setlist");
+const menu = document.getElementById("menu");
+const menuButton = document.getElementById("menuButton");
+const albumList = document.querySelector(".album-list");
+const maxSongs = 26; // セットリストの最大曲数
+
+let currentDropZone = null;
+let activeTouchSlot = null; // モバイルでのドロップゾーンハイライト用
+let rafId = null; // requestAnimationFrame のID
+
+let currentTouchDraggedOriginalElement = null; // ★追加：モバイルのタッチドラッグで元の要素を保持
+
+
+// アルバム1として扱うdata-item-idのリスト（共有テキスト、PDF生成時に使用）
+const album1ItemIds = [
+    'album1-001', 'album1-002', 'album1-003', 'album1-004', 'album1-005', 
+    'album1-006', 'album1-007', 'album1-008', 'album1-009', 'album1-010', 
+    'album1-011', 'album1-012', 'album1-013' 
+];
+
+// Firebaseの初期化（これはHTMLまたは別のJSファイルで一度だけ行う必要があります）
+// 例:
+// if (typeof firebase !== 'undefined' && firebaseConfig) {
+//     firebase.initializeApp(firebaseConfig);
+//     var database = firebase.database();
+// }
+
+
+// =============================================================================
+// ヘルパー関数
+// =============================================================================
+
+function getSlotItemData(element) {
+    if (!element) {
+        console.warn("[getSlotItemData] Provided element is null. Returning null.");
+        return null;
+    }
+
+    const isSetlistItem = element.classList.contains('setlist-item');
+    const isAlbumItem = element.classList.contains('item') && !isSetlistItem;
+
+    let songName = '';
+    let isCheckedShort = false; 
+    let isCheckedSe = false;    
+    let isCheckedDrumsolo = false; 
+    
+    let hasShortOption = (element.dataset.isShortVersion === 'true');
+    let hasSeOption = (element.dataset.hasSeOption === 'true');
+    let hasDrumsoloOption = (element.dataset.hasDrumsoloOption === 'true');
+    
+    const albumClass = Array.from(element.classList).find(className => className.startsWith('album'));
+    let itemId = element.dataset.itemId;
+
+    let rGt = element.dataset.rGt || '';
+    let lGt = element.dataset.lGt || '';
+    let bass = element.dataset.bass || '';
+    let bpm = element.dataset.bpm || '';
+    let chorus = element.dataset.chorus || '';
+
+    // ★追加: data-allow-multiple を取得
+    let allowMultiple = (element.dataset.allowMultiple === 'true');
+
+    if (isSetlistItem) {
+        songName = element.dataset.songName || '';
+        isCheckedShort = (element.dataset.short === 'true'); 
+        isCheckedSe = (element.dataset.seChecked === 'true'); 
+        isCheckedDrumsolo = (element.dataset.drumsoloChecked === 'true'); 
+        
+        hasShortOption = (element.dataset.isShortVersion === 'true');
+        hasSeOption = (element.dataset.hasSeOption === 'true');
+        hasDrumsoloOption = (element.dataset.drumsoloOption === 'true');
+
+    } else if (isAlbumItem) {
+        songName = element.dataset.songName || element.textContent.trim();
+        hasShortOption = (element.dataset.isShortVersion === 'true');
+        hasSeOption = (element.dataset.hasSeOption === 'true');
+        hasDrumsoloOption = (element.dataset.hasDrumsoloOption === 'true');
+        isCheckedShort = false;
+        isCheckedSe = false;
+        isCheckedDrumsolo = false;
+
+    } else if (element.dataset.itemId) { // クローン要素などの場合
+        songName = element.dataset.songName || '';
+        isCheckedShort = (element.dataset.short === 'true');
+        isCheckedSe = (element.dataset.seChecked === 'true');
+        isCheckedDrumsolo = (element.dataset.drumsoloChecked === 'true');
+        hasShortOption = (element.dataset.isShortVersion === 'true');
+        hasSeOption = (element.dataset.hasSeOption === 'true');
+        hasDrumsoloOption = (element.dataset.drumsoloOption === 'true');
+    } else {
+        console.warn("[getSlotItemData] Element has no recognizable data for item:", element);
+        return null;
+    }
+
+    return {
+        name: songName,
+        short: isCheckedShort,
+        seChecked: isCheckedSe,
+        drumsoloChecked: isCheckedDrumsolo,
+        hasShortOption: hasShortOption,
+        hasSeOption: hasSeOption,
+        hasDrumsoloOption: hasDrumsoloOption,
+        albumClass: albumClass,
+        itemId: itemId,
+        slotIndex: element.dataset.slotIndex,
+        rGt: rGt,
+        lGt: lGt,
+        bass: bass,
+        bpm: bpm,
+        chorus: chorus,
+        // ★追加
+        allowMultiple: allowMultiple 
+    };
+}
+
+
+
+/**
+ * 指定されたセットリストスロットの内容をクリアする関数。
+ * @param {HTMLElement} slotElement - クリアするセットリストスロット要素。
+ */
+function clearSlotContent(slotElement) {
+    // スロット内の子要素をすべて削除
+    while (slotElement.firstChild) {
+        slotElement.removeChild(slotElement.firstChild);
+    }
+
+    // データ属性を削除
+    delete slotElement.dataset.itemId;
+    delete slotElement.dataset.songName;
+    delete slotElement.dataset.isShortVersion;
+    delete slotElement.dataset.hasSeOption;
+    delete slotElement.dataset.drumsoloOption;
+    delete slotElement.dataset.rGt;
+    delete slotElement.dataset.lGt;
+    delete slotElement.dataset.bass;
+    delete slotElement.dataset.bpm;
+    delete slotElement.dataset.chorus;
+    delete slotElement.dataset.short;
+    delete slotElement.dataset.seChecked;
+    delete slotElement.dataset.drumsoloChecked;
+
+    // 関連するクラスを削除
+    slotElement.classList.remove(
+        'setlist-item', 'item', 'short', 'se-active', 'drumsolo-active'
+    );
+    // album* クラスも動的に削除する必要がある
+    Array.from(slotElement.classList).forEach(cls => {
+        if (cls.startsWith('album')) {
+            slotElement.classList.remove(cls);
+        }
+    });
+
+    // スタイルをリセット (必要であれば)
+    slotElement.style.pointerEvents = 'none'; // 空スロットはドロップターゲットとしてのみ機能させる
+    slotElement.style.touchAction = 'none';
+    slotElement.style.visibility = 'visible'; // 念のため表示状態に戻す
+    slotElement.classList.remove('placeholder-slot'); // プレースホルダークラスも削除
+    
+    console.log(`[clearSlotContent] Slot ${slotElement.dataset.slotIndex || 'null'} cleared successfully.`);
+}
+
+
+
+
+/**
+ * セットリストから曲を削除し、メニューに再表示する（通常の曲のみ）。
+ * @param {HTMLElement} setlistItemElement - セットリスト内の曲要素。
+ */
+function restoreToOriginalList(setlistItemElement) {
+    if (!setlistItemElement || !setlistItemElement.dataset.itemId) {
+        console.warn("[restoreToOriginalList] Invalid setlist item element provided.");
+        return;
+    }
+
+    const itemIdToRestore = setlistItemElement.dataset.itemId;
+    console.log(`[restoreToOriginalList] Restoring item: ${itemIdToRestore}`);
+
+    // ★修正: data-allow-multiple="true" の場合はメニューには再表示しない
+    // この条件によって、自由入力曲はメニューに再表示されません。
+    if (setlistItemElement.dataset.allowMultiple !== 'true') {
+        const albumItemInMenu = document.querySelector(`.album-content .item[data-item-id="${itemIdToRestore}"]`);
+        if (albumItemInMenu) {
+            albumItemInMenu.style.visibility = ''; // メニュー項目を可視に戻す
+            console.log(`[restoreToOriginalList] Re-showing album item in menu: ${itemIdToRestore}`);
+        } else {
+            console.warn(`[restoreToOriginalList] Album item not found in menu for: ${itemIdToRestore}`);
+        }
+    } else {
+        // ここが自由入力曲のログです。メニューには影響を与えないことを示します。
+        console.log(`[restoreToOriginalList] Item ${itemIdToRestore} is 'allow-multiple', not restoring to menu visibility.`);
+    }
+
+    // セットリストスロットの内容をクリア
+    // この部分でセットリストから曲が削除されます。
+    clearSlotContent(setlistItemElement);
+    setlistItemElement.classList.remove('setlist-item', setlistItemElement.dataset.albumClass);
+    delete setlistItemElement.dataset.itemId;
+    delete setlistItemElement.dataset.songName;
+    delete setlistItemElement.dataset.isShortVersion;
+    delete setlistItemElement.dataset.hasSeOption;
+    delete setlistItemElement.dataset.drumsoloOption;
+    delete setlistItemElement.dataset.rGt;
+    delete setlistItemElement.dataset.lGt;
+    delete setlistItemElement.dataset.bass;
+    delete setlistItemElement.dataset.bpm;
+    delete setlistItemElement.dataset.chorus;
+    delete setlistItemElement.dataset.short;
+    delete setlistItemElement.dataset.seChecked;
+    delete setlistItemElement.dataset.drumsoloChecked;
+    
+    setlistItemElement.style.pointerEvents = '';
+    setlistItemElement.style.touchAction = '';
+
+    showMessage("セットリストから曲を削除しました。", "info");
+    saveSetlistState();
+}
+
+
+/**
+ * カスタムメッセージボックスを表示する関数 (alertの代替)。
+ * @param {string} message - 表示するメッセージ
+ * @param {string} type - メッセージの種類 ('success', 'error', 'info')
+ */
+function showMessage(message, type = 'info') {
+    let messageBox = document.getElementById('customMessageBox');
+    if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'customMessageBox';
+        document.body.appendChild(messageBox);
+    }
+    // スタイルをリセットし、新しいタイプを適用
+    messageBox.className = ''; // 既存のクラスをクリア
+    messageBox.classList.add(type); // 新しいタイプクラスを追加
+
+    messageBox.textContent = message;
+    messageBox.style.opacity = '0';
+    messageBox.style.display = 'block';
+
+    setTimeout(() => messageBox.style.opacity = '1', 10);
+    setTimeout(() => {
+        messageBox.style.opacity = '0';
+        messageBox.addEventListener('transitionend', function handler() {
+            messageBox.style.display = 'none';
+            messageBox.removeEventListener('transitionend', handler);
+        }, { once: true });
+    }, 2000);
+    console.log(`[showMessageBox] Displaying message: "${message}" (Type: ${type})`);
+}
+
+
+/**
+ * セットリストにある曲をアルバムメニュー内で非表示にする。
+ */
+function hideSetlistItemsInMenu() {
+    console.log("[hideSetlistItemsInMenu] START: Hiding setlist items in album menu.");
+    // まずすべてのアルバムアイテムを可視状態に戻す
+    document.querySelectorAll('.album-content .item').forEach(item => {
+        item.style.visibility = ''; // CSSのデフォルトに戻す
+    });
+
+    const currentSetlistItems = document.querySelectorAll("#setlist .setlist-slot.setlist-item");
+    if (currentSetlistItems.length === 0) {
+        console.log("[hideSetlistItemsInMenu] Setlist is empty, all album items should be visible.");
+        return;
+    }
+
+    const setlistItemIds = new Set();
+    currentSetlistItems.forEach(slot => {
+        const itemId = slot.dataset.itemId;
+        if (itemId && slot.dataset.allowMultiple !== 'true') { 
+            setlistItemIds.add(itemId);
+        }
+    });
+
+    albumList.querySelectorAll('.item').forEach(albumItem => { // albumListから探索
+        if (albumItem.dataset.itemId && setlistItemIds.has(albumItem.dataset.itemId)) {
+            albumItem.style.visibility = 'hidden';
+            console.log(`[hideSetlistItemsInMenu] HIDDEN: Album item in menu: ${albumItem.dataset.itemId}`);
+        }
+    });
+    console.log("[hideSetlistItemsInMenu] END: Finished updating album menu item visibility.");
+}
+
+
+/**
+ * セットリストの内容を取得する。
+ * @returns {string[]} セットリストの曲リスト
+ */
+function getSetlist() {
+    const currentSetlist = Array.from(document.querySelectorAll("#setlist .setlist-slot.setlist-item"))
+        .map((slot, index) => {
+            const songData = getSlotItemData(slot);
+            if (!songData) return ''; // データが取得できない場合は空文字列を返す
+
+            let line = `${index + 1}. ${songData.name || ''}`;
+            if (songData.short) line += ' (Short)';
+            if (songData.seChecked) line += ' (SE有り)';
+            if (songData.drumsoloChecked) line += ' (ドラムソロ有り)';
+
+            const tunings = [];
+            // R.Gt, L.Gt, Bass は文字列なので、値があれば追加
+            if (songData.rGt) tunings.push(`R.Gt:${songData.rGt}`);
+            if (songData.lGt) tunings.push(`L.Gt:${songData.lGt}`);
+            if (songData.bass) tunings.push(`Bass:${songData.bass}`);
+            if (tunings.length > 0) line += ` (${tunings.join(' ')})`;
+
+            if (songData.bpm) line += ` (BPM:${songData.bpm})`;
+            if (songData.chorus === 'true') line += ` (C:${songData.chorus})`; // chorusは'true'/'false'なので
+            return line;
+        });
+    console.log("[getSetlist] Current setlist:", currentSetlist);
+    return currentSetlist;
+}
+
+/**
+ * 現在のアプリケーションの状態（セットリスト、メニューの開閉、開いているアルバム、日付、会場）を取得する。
+ * @returns {object} 現在の状態オブジェクト
+ */
+function getCurrentState() {
+    const setlistState = Array.from(setlist.children)
+        .map(slot => slot.classList.contains('setlist-item') ? getSlotItemData(slot) : null)
+        .filter(item => item !== null);
+
+    const menuOpen = menu.classList.contains('open');
+    const openAlbums = Array.from(document.querySelectorAll('.album-content.active')).map(album => album.id);
+
+    const originalAlbumMapAsObject = {};
+    originalAlbumMap.forEach((value, key) => originalAlbumMapAsObject[key] = value);
+
+    const setlistYear = document.getElementById('setlistYear');
+    const setlistMonth = document.getElementById('setlistMonth');
+    const setlistDay = document.getElementById('setlistDay');
+
+    let selectedDate = '';
+    if (setlistYear && setlistMonth && setlistDay) {
+        selectedDate = `${setlistYear.value}-${setlistMonth.value}-${setlistDay.value}`;
+    } else {
+        console.warn("[getCurrentState] Date select elements not found. Date will be empty for saving.");
+    }
+    const setlistVenue = document.getElementById('setlistVenue')?.value || '';
+
+    console.log("[getCurrentState] State for saving:", { setlistState, menuOpen, openAlbums, originalAlbumMapAsObject, selectedDate, setlistVenue });
+    return {
+        setlist: setlistState,
+        menuOpen: menuOpen,
+        openAlbums: openAlbums,
+        originalAlbumMap: originalAlbumMapAsObject,
+        setlistDate: selectedDate,
+        setlistVenue: setlistVenue
+    };
+}
+
+/**
+ * スロットを曲情報で埋める。
+ * @param {Element} slotElement - 対象のスロット要素 (li.setlist-slot)
+ * @param {object} songData - スロットに入れる曲のデータオブジェクト
+ */
+function fillSlotWithItem(slotElement, songData) {
+    console.log(`[fillSlotWithItem] Filling slot ${slotElement.dataset.slotIndex} with item ID: ${songData.itemId}`);
+    console.log(`[fillSlotWithItem] songData received:`, songData);
+
+    // addSongToSlot を呼び出して、すべての設定とイベントリスナーを一度に行う
+    // songData.short, songData.seChecked, songData.drumsoloChecked は addSongToSlot の options で使用される
+    addSongToSlot(slotElement, songData.itemId, songData.name, {
+        isShortVersion: songData.hasShortOption, // `has`プロパティは、そのオプションが「設定可能」かどうか
+        hasSeOption: songData.hasSeOption,
+        drumsoloOption: songData.hasDrumsoloOption,
+        rGt: songData.rGt,
+        lGt: songData.lGt,
+        bass: songData.bass,
+        bpm: songData.bpm,
+        chorus: songData.chorus,
+        // そして、実際にチェックされているかどうかの状態も渡す
+        short: songData.short, 
+        seChecked: songData.seChecked,
+        drumsoloChecked: songData.drumsoloChecked
+    }, songData.albumClass);
+    
+    // ここでチェックボックスの実際の状態を反映 (updateSlotContent内で処理されるので不要になるはず)
+    // ただし、updateSlotContent が options から直接チェックボックスの状態を判断する必要がある
+    // そのため、addSongToSlotのoptionsにshort, seChecked, drumsoloCheckedを含める
+}
+
+
+/**
+ * セットリスト内の2つのスロット間で曲を入れ替える。
+ * @param {HTMLElement} sourceSlot - 入れ替え元のセットリストスロット要素。
+ * @param {HTMLElement} targetSlot - 入れ替え先のセットリストスロット要素。
+ */
+function swapSetlistItems(sourceSlot, targetSlot) {
+    if (!sourceSlot || !targetSlot) {
+        console.error("Invalid slots for swapping.");
+        return;
+    }
+
+    const sourceData = getSlotItemData(sourceSlot);
+    const targetData = getSlotItemData(targetSlot);
+
+    // ソーススロットとターゲットスロットのallowMultiple状態を保存
+    const sourceAllowMultiple = sourceSlot.dataset.allowMultiple === 'true';
+    const targetAllowMultiple = targetSlot.dataset.allowMultiple === 'true';
+
+    // ソーススロットをクリア
+    clearSlotContent(sourceSlot);
+    sourceSlot.classList.remove('setlist-item', sourceData.albumClass);
+    // 元々 allowMultiple であれば、クリア後もその属性を保持
+    if (sourceAllowMultiple) {
+        sourceSlot.dataset.allowMultiple = 'true';
+    } else {
+        delete sourceSlot.dataset.allowMultiple;
+    }
+
+    // ターゲットスロットをクリア
+    clearSlotContent(targetSlot);
+    targetSlot.classList.remove('setlist-item', targetData.albumClass);
+    // 元々 allowMultiple であれば、クリア後もその属性を保持
+    if (targetAllowMultiple) {
+        targetSlot.dataset.allowMultiple = 'true';
+    } else {
+        delete targetSlot.dataset.allowMultiple;
+    }
+
+    // ターゲットスロットにソースの曲を追加
+    if (sourceData.itemId) {
+        addSongToSlot(targetSlot, sourceData.itemId, sourceData.name, {
+            isShortVersion: sourceData.hasShortOption,
+            hasSeOption: sourceData.hasSeOption,
+            drumsoloOption: sourceData.hasDrumsoloOption,
+            rGt: sourceData.rGt,
+            lGt: sourceData.lGt,
+            bass: sourceData.bass,
+            bpm: sourceData.bpm,
+            chorus: sourceData.chorus,
+            short: sourceData.short,
+            seChecked: sourceData.seChecked,
+            drumsoloChecked: sourceData.drumsoloChecked,
+            allowMultiple: sourceData.allowMultiple
+        }, sourceData.albumClass, sourceSlot); // 元の要素としてsourceSlotを渡す
+    }
+
+    // ソーススロットにターゲットの曲を追加
+    if (targetData.itemId) {
+        addSongToSlot(sourceSlot, targetData.itemId, targetData.name, {
+            isShortVersion: targetData.hasShortOption,
+            hasSeOption: targetData.hasSeOption,
+            drumsoloOption: targetData.hasDrumsoloOption,
+            rGt: targetData.rGt,
+            lGt: targetData.lGt,
+            bass: targetData.bass,
+            bpm: targetData.bpm,
+            chorus: targetData.chorus,
+            short: targetData.short,
+            seChecked: targetData.seChecked,
+            drumsoloChecked: targetData.drumsoloChecked,
+            allowMultiple: targetData.allowMultiple
+        }, targetData.albumClass, targetSlot); // 元の要素としてtargetSlotを渡す
+    }
+    
+    // スロットが空になったり、新たに曲が追加されたりした場合にドラッグ＆ドロップイベントを再設定
+    if (sourceData.itemId || targetData.itemId) { // どちらかが曲を持っていた場合
+        enableDragAndDrop(sourceSlot);
+        enableDragAndDrop(targetSlot);
+    }
+    
+    saveSetlistState();
+    showMessage("セットリストの曲を入れ替えました。", "info");
+}
+
+
+// =============================================================================
+// ドラッグ&ドロップ、タッチイベントハンドラ
+// =============================================================================
+
+/**
+ * ドラッグ開始時の処理 (PC向け)。
+ * @param {DragEvent} event - ドラッグイベント
+ */
+function handleDragStart(event) {
+    if (isDragging) return;
+
+    isDragging = true;
+    currentPcDraggedElement = event.target.closest('.item, .setlist-item');
+
+    if (!currentPcDraggedElement) {
+        isDragging = false;
+        return;
+    }
+
+    const itemId = currentPcDraggedElement.dataset.itemId;
+    draggingItemId = itemId;
+
+    // ★追加: dataTransfer.effectAllowed を設定
+    event.dataTransfer.effectAllowed = "move"; // 移動と追加を許可する
+
+    // セットリスト内からのドラッグの場合、元のスロットを透明にする
+    if (currentPcDraggedElement.classList.contains('setlist-item')) {
+        originalSetlistSlot = currentPcDraggedElement;
+        originalSetlistSlot.classList.add('placeholder-slot');
+        originalSetlistSlot.style.visibility = 'hidden';
+        console.log(`[dragstart:PC] Dragging from setlist slot (originalSetlistSlot): ${originalSetlistSlot.dataset.slotIndex}, hidden and placeholder added.`);
+    } else {
+        console.log("[dragstart:PC] Dragging from album. Original item " + itemId + " is the currentPcDraggedElement.");
+    }
+
+    event.dataTransfer.setData("text/plain", itemId);
+    console.log(`[dragstart] dataTransfer set with: ${itemId}`);
+}
+
+
+
+/**
+ * ドラッグ要素がドロップターゲットに入った時の処理。
+ * @param {Event} event - イベントオブジェクト
+ */
+function handleDragEnter(event) {
+    event.preventDefault();
+    const targetSlot = event.target.closest('.setlist-slot');
+    if (targetSlot && !(originalSetlistSlot && targetSlot.dataset.slotIndex === originalSetlistSlot.dataset.slotIndex)) {
+        targetSlot.classList.add('drag-over');
+        // ドロップターゲットとして有効にする
+        targetSlot.style.pointerEvents = 'auto'; // ★修正：ドラッグオーバー中にpointer-eventsをautoにする
+        // console.log(`[dragenter] Entered slot: ${targetSlot.dataset.slotIndex}`); // 過剰なログは削減
+    }
+}
+
+/**
+ * ドラッグ退出時の処理。
+ * @param {DragEvent} event - ドラッグイベント
+ */
+function handleDragLeave(event) {
+    const targetSlot = event.target.closest('.setlist-slot');
+    if (targetSlot) {
+        if (!event.relatedTarget || !targetSlot.contains(event.relatedTarget)) {
+            targetSlot.classList.remove('drag-over');
+            // ドラッグがスロットから離れたらpointer-eventsを元の状態に戻す (finishDraggingで最終的に制御されるためここでは不要かも)
+            // targetSlot.style.pointerEvents = ''; // 一時的にコメントアウト。finishDraggingで一括制御
+            if (currentDropZone === targetSlot) {
+                currentDropZone = null;
+            }
+            // console.log(`[dragleave] Left slot: ${targetSlot.dataset.slotIndex}`); // 過剰なログは削減
+        }
+    }
+}
+
+/**
+ * ドラッグ中の要素がドロップゾーン上にあるときの処理 (PC向け)。
+ * @param {DragEvent} event - ドラッグイベント
+ */
+function handleDragOver(event) {
+    event.preventDefault(); // ドロップを許可するために必要
+
+    // ドロップエフェクトを設定 (これはブラウザの表示に影響します)
+    event.dataTransfer.dropEffect = "move"; 
+
+    const targetSlot = event.target.closest('.setlist-slot');
+    if (targetSlot) {
+        // 現在のドロップゾーンがある場合は、クラスを削除
+        if (currentDropZone && currentDropZone !== targetSlot) {
+            currentDropZone.classList.remove('drag-over');
+        }
+        // 新しいドロップゾーンにクラスを追加
+        if (!targetSlot.classList.contains('drag-over')) {
+            targetSlot.classList.add('drag-over');
+            console.log(`[dragover] Added drag-over to slot ${targetSlot.dataset.slotIndex}`);
+        }
+        currentDropZone = targetSlot;
+
+        // ★修正点: ドラッグオーバー中の空スロットのpointer-eventsを一時的にautoにする★
+        // setlist-itemクラスがない（空のスロット）の場合にのみ適用
+        if (!targetSlot.classList.contains('setlist-item')) {
+            targetSlot.style.pointerEvents = 'auto'; 
+            targetSlot.style.touchAction = 'auto'; 
+        }
+    } else {
+        // スロット以外にドラッグされた場合、現在のドロップゾーンをリセット
+        if (currentDropZone) {
+            currentDropZone.classList.remove('drag-over');
+            currentDropZone = null;
+        }
+    }
+}
+
+
+
+
+/**
+ * ドロップ処理を実行する関数。
+ * @param {HTMLElement} draggedElement - ドロップされた要素（アルバムアイテム、または元のセットリストアイテム）。
+ * @param {HTMLElement} dropTargetSlot - ドロップされた先のセットリストスロット。
+ * @param {HTMLElement | null} originalSourceSlot - 元のセットリストスロット（セットリスト内からのドラッグの場合）。
+ */
+function processDrop(draggedElement, dropTargetSlot, originalSourceSlot) {
+    console.log("[processDrop] Initiated.");
+    console.log("Dragged Element (original):", draggedElement);
+    console.log("Drop Target Slot:", dropTargetSlot ? dropTargetSlot.dataset.slotIndex : "N/A");
+    console.log("Original Source Slot:", originalSourceSlot ? originalSourceSlot.dataset.slotIndex : "N/A");
+
+    if (!dropTargetSlot || !dropTargetSlot.classList.contains('setlist-slot')) {
+        console.warn("[processDrop] Invalid drop target. Aborting.");
+        showMessage("有効なドロップ位置ではありません。", "error");
+        return;
+    }
+
+    const songData = getSlotItemData(draggedElement);
+    if (!songData) {
+        console.error("[processDrop] Failed to get song data from dragged element. Aborting.");
+        showMessage("曲のデータ取得に失敗しました。", "error");
+        return;
+    }
+
+    const albumClass = Array.from(draggedElement.classList).find(cls => cls.startsWith('album') && cls !== 'item');
+    const finalAlbumClass = albumClass || ''; 
+
+    // 同じスロットにドロップされた場合は何もしない
+    if (originalSourceSlot && dropTargetSlot.dataset.slotIndex === originalSourceSlot.dataset.slotIndex) {
+        console.log("[processDrop] Dropped back into the same slot. No change.");
+        showMessage("同じ位置にドロップしました。", "info");
+        // ドラッグ中のプレースホルダーを非表示に戻すなどのクリーンアップが必要な場合はここに追加
+        if (originalSourceSlot.classList.contains('placeholder-slot')) {
+            originalSourceSlot.classList.remove('placeholder-slot');
+        }
+        originalSourceSlot.style.visibility = 'visible'; // 元の要素を可視に戻す
+        return;
+    }
+
+    if (originalSourceSlot) { // セットリスト内からの移動または入れ替え
+        console.log("[processDrop] Moving or swapping item within setlist.");
+        
+        // 元のソーススロットの `allowMultiple` 状態を一時的に保存
+        const originalSourceSlotAllowMultiple = originalSourceSlot.dataset.allowMultiple === 'true';
+
+        if (dropTargetSlot.classList.contains('setlist-item')) {
+            // 入れ替え処理
+            console.log(`[processDrop] Swapping item from slot ${originalSourceSlot.dataset.slotIndex} with item in slot ${dropTargetSlot.dataset.slotIndex}.`);
+            
+            const targetSongData = getSlotItemData(dropTargetSlot); 
+            if (!targetSongData) {
+                console.error("[processDrop] Failed to get data for target slot. Aborting swap.");
+                showMessage("曲の入れ替えに失敗しました。", "error");
+                return;
+            }
+
+            // 元のスロットとターゲットスロットのデータを入れ替える
+            // addSongToSlot に allowMultiple を渡す (getSlotItemDataから取得した値)
+            // originalDraggedElement には、その曲が元々あったスロットを渡す
+            addSongToSlot(originalSourceSlot, targetSongData.itemId, targetSongData.name, {
+                isShortVersion: targetSongData.hasShortOption,
+                hasSeOption: targetSongData.hasSeOption,
+                drumsoloOption: targetSongData.hasDrumsoloOption,
+                rGt: targetSongData.rGt,
+                lGt: targetSongData.lGt,
+                bass: targetSongData.bass,
+                bpm: targetSongData.bpm,
+                chorus: targetSongData.chorus,
+                short: targetSongData.short,
+                seChecked: targetSongData.seChecked,
+                drumsoloChecked: targetSongData.drumsoloChecked,
+                allowMultiple: targetSongData.allowMultiple // ★ここを修正
+            }, targetSongData.albumClass, dropTargetSlot); // ★ここを修正 (元のターゲットスロット)
+
+            addSongToSlot(dropTargetSlot, songData.itemId, songData.name, {
+                isShortVersion: songData.hasShortOption,
+                hasSeOption: songData.hasSeOption,
+                drumsoloOption: songData.hasDrumsoloOption,
+                rGt: songData.rGt,
+                lGt: songData.lGt,
+                bass: songData.bass,
+                bpm: songData.bpm,
+                chorus: songData.chorus,
+                short: songData.short,
+                seChecked: songData.seChecked,
+                drumsoloChecked: songData.drumsoloChecked,
+                allowMultiple: songData.allowMultiple // ★ここを修正
+            }, finalAlbumClass, originalSourceSlot); // ★ここを修正 (元のソーススロット)
+
+            showMessage("セットリスト内の曲を入れ替えました。", "success");
+
+        } else {
+            // 空のスロットへの移動ロジック
+            console.log(`[processDrop] Moving item from slot ${originalSourceSlot.dataset.slotIndex} to empty slot ${dropTargetSlot.dataset.slotIndex}.`);
+            
+            // ドロップ先スロットに曲を追加 (allowMultiple を渡す)
+            addSongToSlot(dropTargetSlot, songData.itemId, songData.name, {
+                isShortVersion: songData.hasShortOption,
+                hasSeOption: songData.hasSeOption,
+                drumsoloOption: songData.hasDrumsoloOption,
+                rGt: songData.rGt,
+                lGt: songData.lGt,
+                bass: songData.bass,
+                bpm: songData.bpm,
+                chorus: songData.chorus,
+                short: songData.short,
+                seChecked: songData.seChecked,
+                drumsoloChecked: songData.drumsoloChecked,
+                allowMultiple: songData.allowMultiple // ★ここを修正
+            }, finalAlbumClass, originalSourceSlot); // ★ここを修正 (元のソーススロット)
+
+            // 元のスロットをクリアし、必要に応じて allowMultiple を保持
+            clearSlotContent(originalSourceSlot);
+            // clearSlotContentがdatasetを消さない場合、元のallowMultipleを再適用する
+            if (originalSourceSlotAllowMultiple) {
+                originalSourceSlot.dataset.allowMultiple = 'true';
+            } else {
+                delete originalSourceSlot.dataset.allowMultiple;
+            }
+
+
+            // プレースホルダークラスとvisibilityを元に戻す
+            originalSourceSlot.classList.remove('placeholder-slot');
+            originalSourceSlot.style.visibility = 'visible';
+            
+            showMessage("セットリスト内の曲を移動しました。", "success");
+        }
+    } else { // アルバムからの追加
+        console.log("[processDrop] Adding item from album to setlist.");
+        if (dropTargetSlot.classList.contains('setlist-item')) {
+            showMessage("既に曲があるスロットには追加できません。", "error");
+            console.warn("[processDrop] Cannot drop album item into an occupied setlist slot.");
+            return;
+        } else {
+            addSongToSlot(dropTargetSlot, songData.itemId, songData.name, {
+                isShortVersion: songData.hasShortOption,
+                hasSeOption: songData.hasSeOption,
+                drumsoloOption: songData.hasDrumsoloOption,
+                rGt: songData.rGt,
+                lGt: songData.lGt,
+                bass: songData.bass,
+                bpm: songData.bpm,
+                chorus: songData.chorus,
+                short: false,
+                seChecked: false,
+                drumsoloChecked: false,
+                allowMultiple: songData.allowMultiple // ★ここを修正
+            }, finalAlbumClass, draggedElement); // ★ここを修正 (元のアルバムアイテム)
+            
+            showMessage("セットリストに曲を追加しました。", "success");
+            
+            // アルバムからのドラッグの場合、自由入力曲でなければメニューから非表示にする
+            if (songData.allowMultiple !== true) {
+                draggedElement.style.visibility = 'hidden';
+                console.log(`[processDrop] Hiding album item from menu: ${songData.itemId}`);
+            } else {
+                console.log(`[processDrop] Keeping 'allow-multiple' album item visible: ${songData.itemId}`);
+            }
+        }
+    }
+    
+    // 全体の状態を保存
+    saveSetlistState();
+    // メニューの表示状態を同期
+    hideSetlistItemsInMenu();
+}
+
+
+
+
+
+/**
+ * 要素がドロップされたときの処理 (PC向け)。
+ * @param {DragEvent} event - ドロップイベント
+ */
+function handleDrop(event) {
+    event.preventDefault();
+
+    console.log("[handleDrop] Drop event fired.");
+
+    if (!isDragging) {
+        console.warn("[handleDrop] Not in dragging state. Aborting drop.");
+        return;
+    }
+
+    // ドラッグ中のデータが空の場合
+    const droppedItemId = event.dataTransfer.getData("text/plain");
+    if (!droppedItemId) {
+        console.error("[handleDrop] No item ID found in dataTransfer. Aborting.");
+        finishDragging(true); // キャンセルとしてクリーンアップ
+        return;
+    }
+    
+    // ドロップターゲットのスロットを特定
+    const targetSlot = event.target.closest('.setlist-slot');
+    if (!targetSlot) {
+        console.warn("[handleDrop] No valid drop target slot found. Aborting.");
+        finishDragging(true); // 有効なドロップ先がない場合はキャンセルとしてクリーンアップ
+        return;
+    }
+
+    let actualDraggedElement = null;
+
+    if (originalSetlistSlot) { // セットリスト内からのドラッグ
+        actualDraggedElement = originalSetlistSlot;
+        console.log(`[handleDrop] Identified original source slot for drag: ${originalSetlistSlot.dataset.slotIndex}`);
+    } else { // アルバムからのドラッグ
+        // albumList が確実に存在することを確認
+        const albumList = document.querySelector('.album-list'); // HTMLでアルバムリストの親要素のクラスまたはIDを指定
+        if (!albumList) {
+            console.error("[handleDrop] albumList element not found. Cannot find album item for " + droppedItemId);
+            finishDragging(true);
+            return;
+        }
+        actualDraggedElement = albumList.querySelector(`.item[data-item-id="${droppedItemId}"]`);
+        console.log(`[handleDrop] Identified album source item for drag: ${droppedItemId}`);
+    }
+
+    if (!actualDraggedElement) {
+        console.error(`[handleDrop] Could not identify the actual dragged element for itemId: ${droppedItemId}. Aborting.`);
+        finishDragging(true);
+        return;
+    }
+
+    processDrop(actualDraggedElement, targetSlot, originalSetlistSlot);
+    
+    finishDragging(); // ドロップ処理が完了したらクリーンアップ
+}
+
+
+
+/**
+ * タッチ開始時の処理 (モバイル向け)。
+ */
+function handleTouchStart(event) {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+
+    const closestCheckbox = event.target.closest('input[type="checkbox"]');
+    if (closestCheckbox) {
+        console.log("[touchstart:Mobile] Checkbox clicked directly. Allowing native behavior.");
+        lastTapTime = 0; // ダブルタップ判定をリセット
+        clearTimeout(touchTimeout);
+        touchTimeout = null;
+        isDragging = false;
+        return;
+    }
+
+    // ダブルタップ判定
+    if (tapLength < 300 && tapLength > 0) {
+        event.preventDefault(); // ダブルタップ時のスクロール防止
+        clearTimeout(touchTimeout);
+        touchTimeout = null;
+        handleDoubleClick(event);
+        lastTapTime = 0; // ダブルタップ後はリセット
+        console.log("[touchstart] Double tap detected. Handled by handleDoubleClick.");
+        return;
+    }
+    lastTapTime = currentTime; // 次のタップのために時間を記録
+
+        if (event.touches.length === 1) {
+        const touchedElement = event.target.closest(".setlist-slot.setlist-item") || event.target.closest(".item");
+        
+        if (!touchedElement) {
+            console.warn("[touchstart:Mobile] Touched an element that is not a draggable item (e.g., empty slot or background). Allowing default behavior.");
+            return; 
+        }
+        console.log("[touchstart:Mobile] Touched element (non-checkbox):", touchedElement);
+
+        isDragging = false; 
+        draggingItemId = touchedElement.dataset.itemId;
+
+        if (setlist.contains(touchedElement) && touchedElement.classList.contains('setlist-item')) {
+            originalSetlistSlot = touchedElement;
+            currentTouchDraggedOriginalElement = touchedElement; 
+            console.log(`[touchstart:Mobile] Dragging from setlist slot: ${originalSetlistSlot.dataset.slotIndex}`);
+        } else {
+            originalSetlistSlot = null; 
+            currentTouchDraggedOriginalElement = touchedElement; 
+            currentPcDraggedElement = null; 
+        }
+
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+
+        clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(() => {
+            // ★ここが重要です。ドラッグが開始されるタイミング。
+            if (draggingItemId && document.body.contains(touchedElement)) {
+                // ここで元の要素を非表示にします。
+                if (currentTouchDraggedOriginalElement) {
+                    if (originalSetlistSlot) { 
+                        originalSetlistSlot.classList.add('placeholder-slot');
+                        originalSetlistSlot.style.visibility = 'hidden'; // セットリストの元の要素を非表示
+                        console.log(`[touchstart:Mobile] Original setlist slot ${originalSetlistSlot.dataset.slotIndex} hidden and marked as placeholder.`);
+                    } else { 
+                        currentTouchDraggedOriginalElement.style.visibility = 'hidden'; // アルバムの元の要素を非表示
+                        console.log(`[touchstart:Mobile] Original album item ${currentTouchDraggedOriginalElement.dataset.itemId} hidden.`);
+                    }
+                }
+                
+                // クローンを作成し、表示します。
+                createTouchDraggedClone(touchedElement, touchStartX, touchStartY, draggingItemId);
+                isDragging = true; 
+                console.log("[touchstart:Mobile] Dragging initiated after timeout. Clone created and original hidden.");
+
+                // ドラッグ開始時にすべてのセットリストスロットをドロップ可能にする
+                document.querySelectorAll('.setlist-slot').forEach(slot => {
+                    slot.style.pointerEvents = 'auto'; 
+                    slot.style.touchAction = 'pan-y'; 
+                });
+            } else {
+                console.warn("[touchstart:Mobile] Dragging not initiated after timeout (element removed or ID missing).");
+            }
+            touchTimeout = null;
+        }, 600); // 600ms のロングプレスでドラッグ開始
+    }
+}
+
+
+
+
+
+/**
+ * タッチ移動時の処理 (モバイル向け)。
+ */
+function handleTouchMove(event) {
+    if (!isDragging || !currentTouchDraggedClone) {
+        return; // ドラッグ中でなければ何もしない
+    }
+
+    event.preventDefault(); // デフォルトのスクロール動作などを防止
+
+    const touch = event.touches[0];
+    if (!touch) {
+        console.warn("[handleTouchMove] No touch object found in event. Aborting move.");
+        return;
+    }
+
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+
+    // クローン要素の位置を更新
+    // クローンの中心がタッチ位置になるように調整
+    const cloneRect = currentTouchDraggedClone.getBoundingClientRect();
+    currentTouchDraggedClone.style.left = `${currentX - cloneRect.width / 2}px`;
+    currentTouchDraggedClone.style.top = `${currentY - cloneRect.height / 2}px`;
+
+    // ドラッグオーバーのハイライトをリセットし、すべてのスロットのpointer-eventsをリセット
+    document.querySelectorAll('.setlist-slot').forEach(slot => { // ★修正：すべてのスロットを対象に
+        slot.classList.remove('drag-over');
+        // ドラッグ中は、すべてのスロットがドロップターゲットになる可能性があるため auto にする
+        slot.style.pointerEvents = 'auto'; // ★修正：タッチ移動中もpointer-eventsをautoにする
+    });
+
+    // 現在のタッチ位置にある要素を取得
+    const elementsAtPoint = document.elementsFromPoint(currentX, currentY);
+
+    // ドロップ可能なセットリストスロットを探す
+    const targetSlot = elementsAtPoint.find(el => el.classList.contains('setlist-slot'));
+
+    if (targetSlot) {
+        // ターゲットスロットが自身の元のスロットでない、かつ有効なドロップターゲットである場合
+        const isSelfSlot = originalSetlistSlot && targetSlot.dataset.slotIndex === originalSetlistSlot.dataset.slotIndex;
+        
+        if (!isSelfSlot) { // 自分自身のスロットにはハイライトしない
+            targetSlot.classList.add('drag-over');
+        }
+    }
+}
+
+/**
+ * タッチ終了時の処理 (モバイル向け)。
+ */
+function handleTouchEnd(event) {
+    if (touchTimeout) {
+        clearTimeout(touchTimeout);
+        touchTimeout = null;
+    }
+
+    const touch = event.changedTouches[0];
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+    const deltaX = Math.abs(currentX - touchStartX);
+    const deltaY = Math.abs(currentY - touchStartY);
+    const dragThreshold = 10; // ドラッグとみなす最小移動距離（ピクセル単位）
+
+    // 指が離された位置にある要素を取得
+    const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+    const dropTargetSlot = elementsAtPoint.find(el => el.classList.contains('setlist-slot'));
+
+    // ドラッグが開始されておらず、単なるタップだった場合
+    if (!isDragging) {
+        if (event.target.closest('input[type="checkbox"]')) {
+            console.log("[touchend] Not dragging, but it's a checkbox click. Skipping finishDragging.");
+        } else {
+            console.log("[touchend] Not dragging. No action taken.");
+        }
+        return; // ここで処理を中断し、ブラウザのデフォルト動作を許可
+    }
+
+    // ドラッグは開始されたが、指の移動が最小限だった場合（ロングプレスと見なす）
+    if (deltaX < dragThreshold && deltaY < dragThreshold) {
+        console.log("[touchend] Drag initiated but finger moved minimally. Treating as long-press tap. Cleaning up as cancelled.");
+        finishDragging(true); // キャンセルされたドラッグとしてクリーンアップ
+        event.preventDefault(); // デフォルト動作を防止
+        return; 
+    }
+
+    // ここから下は、実際に「ドラッグ（指の移動あり）」が検出された場合の処理
+    console.log("[touchend] event fired. isDragging:", isDragging);
+
+    if (!currentTouchDraggedClone) {
+        console.error("[touchend] currentTouchDraggedClone is null despite dragging. Aborting.");
+        finishDragging(true); // キャンセル扱いとしてクリーンアップ
+        return;
+    }
+
+    document.querySelectorAll('.setlist-slot.drag-over').forEach(slot => slot.classList.remove('drag-over'));
+
+    console.log("[touchend] Drop target slot:", dropTargetSlot ? dropTargetSlot.dataset.slotIndex : "none (dropped outside setlist)");
+
+    if (dropTargetSlot) {
+        // シナリオ1: アルバムからのドラッグで、空のスロットにドロップする場合
+        // シナリオ2: セットリスト内でのドラッグ（入れ替え、または空きスロットへの移動）
+        // processDrop関数がこれらのロジックを処理するため、ここではシンプルに呼び出す
+        processDrop(currentTouchDraggedClone, dropTargetSlot, originalSetlistSlot);
+    } else {
+        // シナリオ3: セットリスト外へのドロップ、または無効なドロップ
+        console.log("[touchend] Invalid drop scenario or dropped outside setlist. Performing cleanup as cancelled.");
+        showMessage("有効なドロップ位置ではありません。", "error");
+        finishDragging(true); // キャンセル扱いとしてクリーンアップ
+    }
+    // ドロップが成功した場合も失敗した場合も、finishDraggingは processDrop またはここから呼ばれる
+    finishDragging(); // 必ずドラッグ状態をクリーンアップ
+}
+
+
+
+/**
+ * タッチドラッグ中に動かすクローン要素を作成する。
+ * @param {HTMLElement} originalElement - ドラッグ開始された元の要素。
+ * @param {number} initialX - タッチ開始時のX座標。
+ * @param {number} initialY - タッチ開始時のY座標。
+ * @param {string} itemIdToClone - クローンするアイテムのID。
+ */
+function createTouchDraggedClone(originalElement, initialX, initialY, itemIdToClone) {
+    if (currentTouchDraggedClone) {
+        currentTouchDraggedClone.remove();
+        currentTouchDraggedClone = null;
+    }
+    if (!originalElement || !document.body.contains(originalElement)) {
+        console.warn("[createTouchDraggedClone] Original element not valid or not in body. Aborting clone creation.");
+        return;
+    }
+
+    currentTouchDraggedClone = document.createElement('li'); 
+    currentTouchDraggedClone.classList.add("dragging", "touch-dragging-clone", "setlist-item", "item"); 
+    const originalAlbumClass = Array.from(originalElement.classList).find(cls => cls.startsWith('album'));
+    if (originalAlbumClass) {
+        currentTouchDraggedClone.classList.add(originalAlbumClass);
+    }
+    
+    const songData = getSlotItemData(originalElement);
+    if (!songData) {
+        console.error("[createTouchDraggedClone] Failed to get song data from original element. Cannot create clone.");
+        return;
+    }
+
+    // dataset をクローンに設定
+    currentTouchDraggedClone.dataset.itemId = songData.itemId;
+    currentTouchDraggedClone.dataset.songName = songData.name;
+    currentTouchDraggedClone.dataset.isShortVersion = songData.hasShortOption ? 'true' : 'false';
+    currentTouchDraggedClone.dataset.hasSeOption = songData.hasSeOption ? 'true' : 'false';
+    currentTouchDraggedClone.dataset.drumsoloOption = songData.hasDrumsoloOption ? 'true' : 'false';
+    currentTouchDraggedClone.dataset.rGt = songData.rGt || '';
+    currentTouchDraggedClone.dataset.lGt = songData.lGt || '';
+    currentTouchDraggedClone.dataset.bass = songData.bass || '';
+    currentTouchDraggedClone.dataset.bpm = songData.bpm || '';
+    currentTouchDraggedClone.dataset.chorus = songData.chorus || 'false';
+    currentTouchDraggedClone.dataset.short = songData.short ? 'true' : 'false';
+    currentTouchDraggedClone.dataset.seChecked = songData.seChecked ? 'true' : 'false';
+    currentTouchDraggedClone.dataset.drumsoloChecked = songData.drumsoloChecked ? 'true' : 'false';
+    // ★追加: allowMultiple属性もクローンにコピー
+    if (songData.allowMultiple) {
+        currentTouchDraggedClone.dataset.allowMultiple = 'true';
+    }
+
+    updateSlotContent(currentTouchDraggedClone, songData.name, songData);
+
+    document.body.appendChild(currentTouchDraggedClone);
+
+    const rect = originalElement.getBoundingClientRect();
+    Object.assign(currentTouchDraggedClone.style, {
+        position: 'fixed',
+        zIndex: '10000',
+        width: rect.width + 'px',
+        height: rect.height + 'px',
+        left: (initialX - rect.width / 2) + 'px',
+        top: (initialY - rect.height / 2) + 'px',
+        pointerEvents: 'none',
+        opacity: '0.9',
+        backgroundColor: 'white',
+        color: 'black',
+        border: '1px solid #ccc',
+        boxSizing: 'border-box'
+    });
+    console.log(`[createTouchDraggedClone] clone created for itemId=${itemIdToClone} at (${currentTouchDraggedClone.style.left}, ${currentTouchDraggedClone.style.top})`);
+}
+
+
+
+/**
+ * ドラッグ＆ドロップ操作完了後のクリーンアップ。
+ * @param {boolean} [wasCancelled=false] - 操作がキャンセルされたかどうか。
+ */
+function finishDragging(wasCancelled = false) {
+    console.log(`[finishDragging] Cleanup started. Was cancelled: ${wasCancelled ? '[object DragEvent]' : 'false'}`); // ログの改善
+
+    // ドラッグ中の要素をクリーンアップ
+    if (currentPcDraggedElement) {
+        currentPcDraggedElement.classList.remove("dragging");
+        currentPcDraggedElement = null;
+    }
+    // タッチドラッグクローンをクリーンアップ
+    if (currentTouchDraggedClone) {
+        currentTouchDraggedClone.remove();
+        currentTouchDraggedClone = null;
+    }
+
+    // 元のセットリストスロットの可視性を戻す
+    if (originalSetlistSlot) {
+        originalSetlistSlot.style.visibility = 'visible';
+        originalSetlistSlot.classList.remove('placeholder-slot');
+        originalSetlistSlot = null;
+    }
+
+    // ドロップゾーンのハイライトを解除
+    if (currentDropZone) {
+        currentDropZone.classList.remove('drag-over');
+        currentDropZone = null;
+    }
+
+    // グローバルドラッグ状態をリセット
+    draggingItemId = null;
+    isDragging = false;
+    currentTouchDraggedOriginalElement = null;
+
+    // requestAnimationFrame ループを停止
+    if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+
+    // ★修正点: すべてのセットリストスロットのpointer-eventsを再評価★
+    // このロジックは、ドラッグ終了時にスロットの状態を正しくリセットします。
+    document.querySelectorAll('.setlist-slot').forEach(slot => {
+    // 空のスロットでもドロップターゲットとなるように、常に'auto'を設定
+    slot.style.pointerEvents = 'auto';
+    // touchAction はモバイルのみ関係するため、PCでは特に影響しませんが、
+    // コードの一貫性を保つためセットしておきます
+    slot.style.touchAction = 'pan-y'; 
+    });
+
+    hideSetlistItemsInMenu(); // メニューの表示を更新
+
+    console.log("[finishDragging] Cleanup complete.");
+}
+
+
+
+
+
+function handleDoubleClick(event) {
+    event.preventDefault(); 
+
+    if (event.target.closest('input[type="checkbox"]')) {
+        console.log("[handleDoubleClick] Checkbox double-clicked. Skipping custom action.");
+        return;
+    }
+
+    let albumItemElement = event.target.closest('.album-content .item');
+    if (albumItemElement) {
+        console.log("[handleDoubleClick] Double-clicked an album item. Attempting to add to setlist.");
+        const firstEmptySlot = document.querySelector('#setlist .setlist-slot:not(.setlist-item)');
+        if (firstEmptySlot) {
+            const songData = getSlotItemData(albumItemElement); 
+            if (!songData) {
+                console.warn("[handleDoubleClick] Could not get song data from album item. Aborting.");
+                showMessage("曲のデータを取得できませんでした。", "error");
+                return;
+            }
+
+            // ここで originalDraggedElement として albumItemElement を渡す
+            addSongToSlot(firstEmptySlot, songData.itemId, songData.name, {
+                isShortVersion: songData.hasShortOption,
+                hasSeOption: songData.hasSeOption,
+                drumsoloOption: songData.hasDrumsoloOption,
+                rGt: songData.rGt,
+                lGt: songData.lGt,
+                bass: songData.bass,
+                bpm: songData.bpm,
+                chorus: songData.chorus,
+                short: false,
+                seChecked: false,
+                drumsoloChecked: false,
+                allowMultiple: songData.allowMultiple // getSlotItemData から取得した allowMultiple を渡す
+            }, songData.albumClass, albumItemElement); // ★修正: albumItemElement を渡す
+            
+            showMessage("セットリストに曲を追加しました。", "success");
+            
+            // ★修正: ダブルクリックで追加した場合も allowMultiple が true なら非表示にしない
+            if (songData.allowMultiple !== true) { // boolean === true とすることで確実にチェック
+                albumItemElement.style.visibility = 'hidden';
+                console.log(`[handleDoubleClick] Hiding album item from menu: ${albumItemElement.dataset.itemId}`);
+            } else {
+                console.log(`[handleDoubleClick] Keeping 'allow-multiple' album item visible: ${albumItemElement.dataset.itemId}`);
+            }
+            saveSetlistState();
+            // hideSetlistItemsInMenu(); // 個別にvisibilityを設定したので、この呼び出しは不要になる可能性がある
+                                        // 全体の同期を保証するため、あっても問題ない
+        } else {
+            showMessage("セットリストに空きがありません。", "error");
+        }
+        return; 
+    }
+
+    let setlistItemElement = event.target.closest('.setlist-slot.setlist-item');
+    if (setlistItemElement) {
+        // ★修正: allowMultiple の曲はセットリストから削除するが、メニューには表示されたままにする
+        if (setlistItemElement.dataset.allowMultiple === 'true') {
+            console.log("[handleDoubleClick] Double-clicked a 'free input' song. Removing from setlist, but keeping in album menu.");
+            // セットリストから削除する（clearSlotContent を使用）
+            clearSlotContent(setlistItemElement);
+            setlistItemElement.classList.remove('setlist-item', setlistItemElement.dataset.albumClass);
+            delete setlistItemElement.dataset.itemId;
+            delete setlistItemElement.dataset.songName;
+            delete setlistItemElement.dataset.isShortVersion;
+            delete setlistItemElement.dataset.hasSeOption;
+            delete setlistItemElement.dataset.drumsoloOption;
+            delete setlistItemElement.dataset.rGt;
+            delete setlistItemElement.dataset.lGt;
+            delete setlistItemElement.dataset.bass;
+            delete setlistItemElement.dataset.bpm;
+            delete setlistItemElement.dataset.chorus;
+            delete setlistItemElement.dataset.short;
+            delete setlistItemElement.dataset.seChecked;
+            delete setlistItemElement.dataset.drumsoloChecked;
+            // dataset.allowMultiple はそのまま保持しておく
+            
+            setlistItemElement.style.pointerEvents = ''; // デフォルトに戻す
+            setlistItemElement.style.touchAction = ''; // デフォルトに戻す
+            
+            showMessage("自由入力曲をセットリストから削除しました。", "info");
+            saveSetlistState();
+            // hideSetlistItemsInMenu(); // 必要ない、なぜならメニューからは元々消さないため。
+                                        // しかし、他の通常曲との兼ね合いで全体同期のために残しても良い。
+            return;
+        }
+        console.log(`[handleDoubleClick] Double-clicked setlist item: ID=${setlistItemElement.dataset.itemId}, Slot Index=${setlistItemElement.dataset.slotIndex}. Restoring to original list.`);
+        restoreToOriginalList(setlistItemElement);
+        return; 
+    }
+
+    console.log("[handleDoubleClick] No valid setlist item or album item found for double click. Event target was:", event.target);
+}
+
+
+// =============================================================================
+// PDF生成機能
+// =============================================================================
+
+/**
+ * セットリストのPDFを生成し、共有またはダウンロードする。
+ * 提供されたPDF形式（テーブル形式）に似たレイアウトで生成し、日本語に対応。
+ * jsPDF-AutoTableを使用する。
+ */
+async function generateSetlistPdf() {
+    showMessage("PDFを生成中...", "info");
+    console.log("[generateSetlistPdf] PDF generation started.");
+
+    const setlistYear = document.getElementById('setlistYear')?.value;
+    const setlistMonth = document.getElementById('setlistMonth')?.value;
+    const setlistDay = document.getElementById('setlistDay')?.value;
+    const setlistVenue = document.getElementById('setlistVenue')?.value;
+
+    let headerText = '';
+    if (setlistYear && setlistMonth && setlistDay) {
+        headerText += `${setlistYear}/${parseInt(setlistMonth)}/${parseInt(setlistDay)}`;
+    }
+    if (setlistVenue) {
+        if (headerText) headerText += ' ';
+        headerText += setlistVenue;
+    }
+
+    const tableHeaders = ["No.", "タイトル", "R.Gt(克哉)", "L.Gt(彰)", "Bass(信人)", "BPM", "コーラス"];
+    const tableBody = [];
+    const simplePdfBody = [];
+    const setlistSlots = document.querySelectorAll("#setlist .setlist-slot");
+
+    let currentItemNoDetailed = 1;
+    let currentItemNoSimple = 1;
+    let currentItemNoShareable = 1;
+
+    let shareableTextContent = '';
+    if (headerText) {
+        shareableTextContent += `${headerText}\n\n`;
+    }
+
+    for (const slot of setlistSlots) {
+        if (slot.classList.contains('setlist-item')) {
+            const songData = getSlotItemData(slot);
+            if (!songData) continue;
+
+            let titleText = songData.name || '';
+            if (songData.short) titleText += ' (Short)';
+            if (songData.seChecked) titleText += ' (SE有り)';
+            if (songData.drumsoloChecked) titleText += ' 〜ドラムソロ〜';
+
+            const isAlbum1 = songData.itemId && album1ItemIds.includes(songData.itemId);
+
+            const detailedRowNo = isAlbum1 ? '' : (currentItemNoDetailed++).toString();
+
+            let chorusDisplay = '';
+            if (songData.chorus && songData.chorus !== 'false') {
+                chorusDisplay = songData.chorus; 
+            }
+
+            tableBody.push([
+                detailedRowNo, titleText, songData.rGt || '', songData.lGt || '',
+                songData.bass || '', songData.bpm || '', chorusDisplay
+            ]);
+
+            if (isAlbum1) {
+                simplePdfBody.push(`    ${titleText}`);
+            } else {
+                simplePdfBody.push(`${currentItemNoSimple++}. ${titleText}`);
+            }
+
+            if (isAlbum1) {
+                shareableTextContent += `    ${titleText}\n`;
+            } else {
+                shareableTextContent += `${currentItemNoShareable++}. ${titleText}\n`;
+            }
+        } else if (slot.classList.contains('setlist-slot-text')) {
+            const textContent = slot.textContent.trim();
+            if (textContent) {
+                tableBody.push([textContent, '', '', '', '', '', '']);
+                simplePdfBody.push(textContent);
+                shareableTextContent += `${textContent}\n`;
+            }
+        }
+    }
+
+    console.log("[generateSetlistPdf] Generated Shareable Text:\n", shareableTextContent);
+
+    try {
+        const { jsPDF } = window.jspdf;
+        // ★ここを修正します★
+        // generateSetlistPdf関数内のネストされたregisterJapaneseFont関数を削除
+        // その代わりに、外部のfonts.jsで定義されたregisterJapaneseFont関数を呼び出します。
+
+        // --- 1. 詳細なセットリストPDFの生成 ---
+        const detailedPdf = new jsPDF('p', 'mm', 'a4');
+        registerJapaneseFont(detailedPdf);// fonts.jsで定義された関数を呼び出す
+        detailedPdf.setFont('NotoSansJP', 'normal'); // 明示的にフォントを設定
+
+        const headerCellHeight = 10;
+        const topMargin = 20;
+        const leftMargin = 10;
+        const pageWidth = detailedPdf.internal.pageSize.getWidth();
+        const tableWidth = pageWidth - (leftMargin * 2);
+        let detailedYPos = topMargin;
+
+        if (headerText) {
+            detailedPdf.setFillColor(220, 220, 220);
+            detailedPdf.setDrawColor(0, 0, 0);
+            detailedPdf.setLineWidth(0.3);
+            detailedPdf.rect(leftMargin, detailedYPos, tableWidth, headerCellHeight, 'FD');
+            detailedPdf.setFontSize(14);
+            detailedPdf.setFont('NotoSansJP', 'bold');
+            detailedPdf.setTextColor(0, 0, 0);
+            detailedPdf.text(headerText, pageWidth / 2, detailedYPos + headerCellHeight / 2 + 0.5, { align: 'center', baseline: 'middle' });
+            detailedYPos += headerCellHeight;
+        }
+
+        detailedPdf.autoTable({
+            head: [tableHeaders],
+            body: tableBody,
+            startY: detailedYPos,
+            theme: 'grid',
+            styles: {
+                font: 'NotoSansJP', fontSize: 9, cellPadding: 2,
+                lineColor: [0, 0, 0], lineWidth: 0.3, textColor: [0, 0, 0], textOverflow: 'clip'
+            },
+            headStyles: {
+                fillColor: [220, 220, 220], textColor: [0, 0, 0],
+                font: 'NotoSansJP', fontStyle: 'bold', halign: 'center'
+            },
+            columnStyles: {
+                0: { cellWidth: 12, halign: 'center' }, 
+                1: { cellWidth: 72, halign: 'left' },   // タイトル
+                2: { cellWidth: 24, halign: 'center' }, // R.Gt(克哉) 
+                3: { cellWidth: 24, halign: 'center' }, // L.Gt(彰) 
+                4: { cellWidth: 24, halign: 'center' }, // Bass(信人)
+                5: { cellWidth: 16, halign: 'center' },
+                6: { cellWidth: 18, halign: 'center' }
+            },
+            margin: { top: topMargin, right: 10, bottom: 10, left: leftMargin },
+            didDrawPage: function (data) {
+                detailedPdf.setFontSize(10);
+                detailedPdf.setFont('NotoSansJP', 'normal');
+                detailedPdf.text('Page ' + detailedPdf.internal.getNumberOfPages(), detailedPdf.internal.pageSize.getWidth() - 10, detailedPdf.internal.pageSize.getHeight() - 10, { align: 'right' });
+            }
+        });
+
+        const detailedFilename = `セットリスト_詳細_${headerText.replace(/[ /]/g, '_') || '日付なし'}.pdf`;
+        detailedPdf.save(detailedFilename);
+        console.log("[generateSetlistPdf] Detailed PDF generated and downloaded:", detailedFilename);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // --- 2. シンプルなセットリストPDFの生成 ---
+        const simplePdf = new jsPDF('p', 'mm', 'a4');
+        registerJapaneseFont(simplePdf);// fonts.jsで定義された関数を呼び出す
+        simplePdf.setFont('NotoSansJP', 'normal'); // 明示的にフォントを設定
+
+        const simpleFontSize = 28;
+        simplePdf.setFontSize(simpleFontSize);
+
+        const simpleTopMargin = 30;
+        let simpleYPos = simpleTopMargin;
+        const simpleLeftMargin = 25;
+
+        if (headerText) {
+            simplePdf.setFontSize(simpleFontSize + 8);
+            simplePdf.text(headerText, simpleLeftMargin, simpleYPos);
+            simpleYPos += simpleFontSize * 0.7;
+            simplePdf.setFontSize(simpleFontSize);
+        }
+
+        simplePdfBody.forEach(line => {
+            simplePdf.text(line, simpleLeftMargin, simpleYPos);
+            simpleYPos += simpleFontSize * 0.38;
+
+            const bottomMarginThreshold = simpleFontSize + 10;
+            if (simpleYPos > simplePdf.internal.pageSize.getHeight() - bottomMarginThreshold) {
+                simplePdf.addPage();
+                simpleYPos = simpleTopMargin;
+                simplePdf.setFont('NotoSansJP', 'bold');
+                simplePdf.setFontSize(simpleFontSize);
+            }
+        });
+
+        const simpleFilename = `セットリスト_シンプル_${headerText.replace(/[ /]/g, '_') || '日付なし'}.pdf`;
+        simplePdf.save(simpleFilename);
+        console.log("[generateSetlistPdf] Simple PDF generated and downloaded:", simpleFilename);
+
+        showMessage("2種類のPDFを生成しました！", "success");
+
+    } catch (error) {
+        console.error("[generateSetlistPdf] PDF生成に失敗しました:", error);
+        showMessage("PDF生成に失敗しました。", "error");
+    }
+}
+
+
+// =============================================================================
+// Firebase連携と状態管理
+// =============================================================================
+
+/**
+ * Firebase Realtime Database に現在の状態を保存し、共有IDを生成する。
+ */
+function shareSetlist() {
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        showMessage('Firebaseが初期化されていません。', 'error'); // showMessageBox から showMessage に変更
+        console.error('Firebase is not initialized or firebase.database is not available.');
+        return;
+    }
+
+    const currentState = getCurrentState();
+    const setlistRef = database.ref('setlists').push();
+
+    setlistRef.set(currentState)
+        .then(() => {
+            const shareId = setlistRef.key;
+            const shareLink = `${window.location.origin}${window.location.pathname}?shareId=${shareId}`;
+
+            let shareText = '';
+            if (currentState.setlistDate || currentState.setlistVenue) {
+                shareText += '------------------------------\n';
+                if (currentState.setlistDate) shareText += `日付: ${currentState.setlistDate}\n`;
+                if (currentState.setlistVenue) shareText += `会場: ${currentState.setlistVenue}\n`;
+                shareText += '------------------------------\n\n';
+            }
+
+            let songListText = "";
+            let shareableTextItemNo = 1; // 共有テキスト用の連番カウンタ
+
+            currentState.setlist.forEach(songData => {
+                if (!songData) return;
+
+                let titleText = songData.name || '';
+                if (songData.short) titleText += ' (Short)';
+                if (songData.seChecked) titleText += ' (SE有り)';
+                if (songData.drumsoloChecked) titleText += ' 〜ドラムソロ〜';
+
+                const isAlbum1 = songData.itemId && album1ItemIds.includes(songData.itemId);
+
+                if (isAlbum1) {
+                    songListText += `    ${titleText}\n`;
+                } else {
+                    songListText += `${shareableTextItemNo++}. ${titleText}\n`;
+                }
+            });
+            shareText += songListText;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'セットリスト共有',
+                    text: shareText,
+                    url: shareLink,
+                })
+                    .then(() => console.log('[shareSetlist] Web Share API Success'))
+                    .catch((error) => {
+                        console.error('[shareSetlist] Web Share API Failed:', error);
+                        if (error.name !== 'AbortError') showMessage('共有に失敗しました。', 'error');
+                    });
+            } else {
+                const tempInput = document.createElement('textarea');
+                tempInput.value = `${shareText}\n共有リンク: ${shareLink}`; // テキストとリンクを両方コピー
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                showMessage('セットリスト情報と共有リンクをクリップボードにコピーしました！', 'success');
+                console.log(`[shareSetlist] Setlist saved. Share ID: ${shareId}, Link: ${shareLink} (using execCommand)`);
+            }
+        })
+        .catch(error => {
+            console.error('[shareSetlist] Firebaseへの保存に失敗しました:', error);
+            showMessage('セットリストの保存に失敗しました。', 'error');
+        });
+}
+
+/**
+ * URLの共有IDに基づいて Firebase Realtime Database から状態をロードする。
+ * @returns {Promise<void>} ロード処理の完了を示すPromise
+ */
+function loadSetlistState() {
+    return new Promise((resolve, reject) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareId = urlParams.get('shareId');
+
+        if (!shareId) {
+            console.log("[loadSetlistState] No shareId found in URL. Initializing default date.");
+            updateDatePickersToToday();
+            return resolve();
+        }
+
+        if (typeof firebase === 'undefined' || !firebase.database) {
+            showMessage('Firebaseが初期化されていません。', 'error');
+            console.error('Firebase is not initialized or firebase.database is not available.');
+            return reject(new Error('Firebase not initialized.'));
+        }
+
+        console.log(`[loadSetlistState] Loading state for shareId: ${shareId}`);
+        const setlistRef = database.ref(`setlists/${shareId}`);
+        setlistRef.once('value')
+            .then((snapshot) => {
+                const state = snapshot.val();
+                if (state && state.setlist) {
+                    console.log("[loadSetlistState] State loaded:", state);
+
+                    // セットリスト、アルバム表示、マップを初期化
+                    // maxSongs のループではなく、直接スロット要素を取得してクリア
+                    document.querySelectorAll('#setlist .setlist-slot').forEach(slot => {
+                        clearSlotContent(slot);
+                    });
+                    document.querySelectorAll('.album-content .item').forEach(item => item.style.visibility = '');
+                    originalAlbumMap.clear();
+                    console.log("[loadSetlistState] Setlist cleared, album items reset, and originalAlbumMap reset.");
+
+                    if (state.originalAlbumMap) {
+                        for (const key in state.originalAlbumMap) {
+                            originalAlbumMap.set(key, state.originalAlbumMap[key]);
+                        }
+                        console.log("[loadSetlistState] originalAlbumMap restored:", originalAlbumMap);
+                    }
+
+                    // 日付と会場の復元
+                    const setlistYear = document.getElementById('setlistYear');
+                    const setlistMonth = document.getElementById('setlistMonth');
+                    const setlistDay = document.getElementById('setlistDay');
+                    const setlistVenue = document.getElementById('setlistVenue');
+
+                    if (state.setlistDate && setlistYear && setlistMonth && setlistDay) {
+                        const dateParts = state.setlistDate.split('-');
+                        if (dateParts.length === 3) {
+                            setlistYear.value = dateParts[0];
+                            setlistMonth.value = dateParts[1];
+                            updateDays(); // 日付選択肢を更新
+                            setlistDay.value = dateParts[2];
+                            console.log(`[loadSetlistState] Restored date: ${state.setlistDate}`);
+                        } else {
+                            console.warn("[loadSetlistState] Invalid date format for restoring:", state.setlistDate);
+                        }
+                    } else {
+                        console.log("[loadSetlistState] No date to restore or date select elements not found.");
+                        updateDatePickersToToday(); // デフォルトで今日の日付を設定
+                    }
+                    if (setlistVenue) {
+                        setlistVenue.value = state.setlistVenue || '';
+                        console.log(`[loadSetlistState] Restored venue: ${state.setlistVenue || 'N/A'}`);
+                    }
+
+                    // セットリストアイテムの復元
+                    state.setlist.forEach(itemData => {
+                        const targetSlot = setlist.querySelector(`.setlist-slot[data-slot-index="${itemData.slotIndex}"]`);
+                        if (targetSlot) {
+                            // fillSlotWithItem を使用してデータをスロットに設定
+                            fillSlotWithItem(targetSlot, itemData);
+                            // ロード時にアルバムメニューの該当アイテムを隠す
+                            // hideSetlistItemsInMenu() が後でまとめて処理するのでここでは不要
+                            console.log(`[loadSetlistState] Filled slot ${itemData.slotIndex} with item ID: ${itemData.itemId}`);
+                        } else {
+                            console.warn(`[loadSetlistState] Target slot not found for index: ${itemData.slotIndex}`);
+                        }
+                    });
+
+                    // メニューとアルバムの開閉状態を復元
+                    menu.classList.toggle('open', state.menuOpen);
+                    menuButton.classList.toggle('open', state.menuOpen);
+                    document.querySelectorAll('.album-content').forEach(album => album.classList.remove('active'));
+                    if (state.openAlbums && Array.isArray(state.openAlbums)) {
+                        state.openAlbums.forEach(albumId => {
+                            const albumElement = document.getElementById(albumId);
+                            if (albumElement) albumElement.classList.add('active');
+                        });
+                    }
+                    resolve();
+                } else {
+                    showMessage('共有されたセットリストが見つかりませんでした。', 'error');
+                    console.warn("[loadSetlistState] Shared setlist state not found or invalid.");
+                    updateDatePickersToToday(); // デフォルトで今日の日付を設定
+                    resolve();
+                }
+            })
+            .catch((error) => {
+                console.error('[loadSetlistState] セットリストのロードに失敗しました:', error);
+                showMessage('セットリストのロードに失敗しました。', 'error');
+                updateDatePickersToToday(); // エラー時も今日の日付を設定
+                reject(error);
+            });
+    });
+}
+
+
+
+
+// =============================================================================
+// UI操作関数
+// =============================================================================
+
+/**
+ * メニューの開閉を切り替える。
+ */
+function toggleMenu() {
+    menu.classList.toggle("open");
+    menuButton.classList.toggle("open");
+    console.log(`[toggleMenu] Menu is now: ${menu.classList.contains('open') ? 'open' : 'closed'}`);
+}
+
+/**
+ * アルバムの表示を切り替える。
+ * @param {number} albumIndex - 切り替えるアルバムのインデックス
+ */
+function toggleAlbum(albumIndex) {
+    document.querySelectorAll(".album-content").forEach(content => {
+        if (content.id === "album" + albumIndex) {
+            content.classList.toggle("active");
+            console.log(`[toggleAlbum] Album ${albumIndex} is now: ${content.classList.contains('active') ? 'active' : 'inactive'}`);
+        } else {
+            content.classList.remove("active");
+        }
+    });
+}
+
+/**
+ * 日のドロップダウンを更新する関数
+ */
+function updateDays() {
+    const setlistYear = document.getElementById('setlistYear');
+    const setlistMonth = document.getElementById('setlistMonth');
+    const setlistDay = document.getElementById('setlistDay');
+
+    if (!setlistYear || !setlistMonth || !setlistDay) {
+        console.warn("[updateDays] Date select elements not found. Cannot update days.");
+        return;
+    }
+    const currentDay = setlistDay.value; // 現在選択されている日を保持
+    setlistDay.innerHTML = '';
+    const year = parseInt(setlistYear.value);
+    const month = parseInt(setlistMonth.value);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const option = document.createElement('option');
+        option.value = i.toString().padStart(2, '0');
+        option.textContent = i;
+        setlistDay.appendChild(option);
+    }
+    // 現在選択されていた日があればそれを再選択、なければ最大日数を超えないように調整
+    if (currentDay && parseInt(currentDay) <= daysInMonth) {
+        setlistDay.value = currentDay;
+    } else if (parseInt(currentDay) > daysInMonth) {
+        setlistDay.value = daysInMonth.toString().padStart(2, '0');
+    }
+    console.log(`[updateDays] Days updated for ${year}-${month}. Max days: ${daysInMonth}`);
+}
+
+
+
+/**
+ * 日付ピッカーを今日の日付に設定する
+ */
+function updateDatePickersToToday() {
+    const setlistYear = document.getElementById('setlistYear');
+    const setlistMonth = document.getElementById('setlistMonth');
+    const setlistDay = document.getElementById('setlistDay');
+
+    if (setlistYear && setlistMonth && setlistDay) {
+        const today = new Date();
+        setlistYear.value = today.getFullYear();
+        setlistMonth.value = (today.getMonth() + 1).toString().padStart(2, '0');
+        updateDays(); // 月と年を設定した後で、日のドロップダウンを正しく生成
+        setlistDay.value = today.getDate().toString().padStart(2, '0');
+        console.log(`[updateDatePickersToToday] Set setlist date to today: ${setlistYear.value}-${setlistMonth.value}-${setlistDay.value}`);
+    } else {
+        console.warn("[updateDatePickersToToday] Date select elements not fully found. Skipping auto-set date.");
+    }
+}
+
+
+/**
+ * チェックボックスとそのラベルのラッパー要素を作成するヘルパー関数。
+ * @param {string} labelText - チェックボックスのラベルテキスト。
+ * @param {boolean} isChecked - チェックボックスがチェックされているか。
+ * @param {function} onChangeHandler - チェックボックスの状態が変更されたときに呼び出すハンドラ。
+ * @returns {HTMLElement} 作成されたラッパー要素。
+ */
+function createCheckboxWrapper(labelText, isChecked, onChangeHandler) {
+    const wrapper = document.createElement('label');
+    wrapper.classList.add('checkbox-wrapper');
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = isChecked; // ここで初期状態が正しく設定される
+    checkbox.addEventListener('change', onChangeHandler);
+
+    const span = document.createElement('span');
+    span.textContent = labelText;
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(span);
+    return wrapper;
+}
+
+
+/**
+ * セットリストスロットの内容を更新（曲名とオプションの表示）。
+ * @param {HTMLElement} slotElement - 更新するセットリストスロット要素。
+ * @param {string} songName - 表示する曲名。
+ * @param {Object} options - 曲のオプション。
+ */
+function updateSlotContent(slotElement, songName, options) {
+    // 既存のコンテンツをクリア
+    while (slotElement.firstChild) {
+        slotElement.removeChild(slotElement.firstChild);
+    }
+
+    // song-info-container を作成
+    const songInfoContainer = document.createElement('div');
+    songInfoContainer.classList.add('song-info-container');
+
+    // song-name-and-option を作成
+    const songNameAndOption = document.createElement('div');
+    songNameAndOption.classList.add('song-name-and-option');
+
+    // 曲名要素
+    const songNameSpan = document.createElement('span');
+    songNameSpan.textContent = songName;
+    songNameSpan.classList.add('song-name');
+    songNameAndOption.appendChild(songNameSpan);
+
+    // 自由入力曲の場合、spanを編集可能にする
+    if (slotElement.dataset.allowMultiple === 'true') { // この条件が重要
+        songNameSpan.contentEditable = true; 
+        songNameSpan.classList.add('editable-song-name');
+
+        songNameSpan.addEventListener('blur', () => {
+            const newName = songNameSpan.textContent.trim();
+            if (newName === "") {
+                songNameSpan.textContent = "自由入力曲";
+                slotElement.dataset.songName = "自由入力曲";
+            } else {
+                slotElement.dataset.songName = newName;
+            }
+            console.log(`[updateSlotContent] Editable song name updated to: ${slotElement.dataset.songName}`);
+            saveSetlistState(); // 状態変更を保存
+        });
+
+        songNameSpan.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                songNameSpan.blur();
+            }
+        });
+    }
+
+    // オプション要素 (チェックボックス) をラップするコンテナ
+    const itemOptions = document.createElement('div');
+    itemOptions.classList.add('item-options');
+
+    let hasAnyCheckboxOption = false;
+
+    // Short有無
+    if (options.isShortVersion) { 
+        hasAnyCheckboxOption = true;
+        // ★修正点: イベントハンドラをシンプル化★
+        const shortVersionCheckboxWrapper = createCheckboxWrapper('Short', options.short, (e) => { 
+            slotElement.dataset.short = e.target.checked.toString();
+            slotElement.classList.toggle('short', e.target.checked);
+            // ここで updateSlotContent の再帰呼び出しを削除
+            // UIの再描画はCSSクラスのトグルで行い、データ属性を更新する
+            console.log(`[CheckboxChange] Slot ${slotElement.dataset.slotIndex} Short status changed to: ${e.target.checked}`);
+        });
+        shortVersionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'short';
+        itemOptions.appendChild(shortVersionCheckboxWrapper);
+    }
+
+    // SE有無
+    if (options.hasSeOption) { 
+        hasAnyCheckboxOption = true;
+        // ★修正点: イベントハンドラをシンプル化★
+        const seOptionCheckboxWrapper = createCheckboxWrapper('SE有り', options.seChecked, (e) => { 
+            slotElement.dataset.seChecked = e.target.checked.toString();
+            slotElement.classList.toggle('se-active', e.target.checked);
+            console.log(`[CheckboxChange] Slot ${slotElement.dataset.slotIndex} SE status changed to: ${e.target.checked}`);
+        });
+        seOptionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'se';
+        itemOptions.appendChild(seOptionCheckboxWrapper);
+    }
+
+    // ドラムソロ有無
+    if (options.drumsoloOption) { // ここを options.hasDrumsoloOption から options.drumsoloOption に変更
+        console.log(`[updateSlotContent] Drumsolo option is TRUE for song: ${songName}. Type: ${typeof options.drumsoloOption}`); // ログも変更
+        hasAnyCheckboxOption = true;
+        const drumsoloOptionCheckboxWrapper = createCheckboxWrapper('ドラムソロ有り', options.drumsoloChecked, (e) => { 
+            slotElement.dataset.drumsoloChecked = e.target.checked.toString();
+            slotElement.classList.toggle('drumsolo-active', e.target.checked);
+            console.log(`[CheckboxChange] Slot ${slotElement.dataset.slotIndex} ドラムソロ status changed to: ${e.target.checked}`);
+        });
+        drumsoloOptionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'drumsolo';
+        itemOptions.appendChild(drumsoloOptionCheckboxWrapper);
+    } else {
+        console.log(`[updateSlotContent] Drumsolo option is FALSE for song: ${songName}. Type: ${typeof options.drumsoloOption}`); // ログも変更
+    }
+    
+    if (hasAnyCheckboxOption) {
+        songNameAndOption.appendChild(itemOptions);
+    }
+
+    songInfoContainer.appendChild(songNameAndOption);
+
+    // Additional Song Info (チューニング, BPM, コーラス)
+    const additionalInfoDiv = document.createElement('div');
+    additionalInfoDiv.classList.add('additional-song-info');
+    
+    let infoParts = [];
+    if (options.rGt) infoParts.push(`R.Gt: ${options.rGt}`);
+    if (options.lGt) infoParts.push(`L.Gt: ${options.lGt}`);
+    if (options.bass) infoParts.push(`Ba: ${options.bass}`);
+    if (options.bpm) infoParts.push(`BPM: ${options.bpm}`);
+    if (options.chorus && options.chorus !== 'false') infoParts.push(`コーラス: ${options.chorus}`); 
+
+    if (infoParts.length > 0) {
+        additionalInfoDiv.textContent = infoParts.join(' | ');
+        songInfoContainer.appendChild(additionalInfoDiv);
+    }
+
+    slotElement.appendChild(songInfoContainer);
+
+    // ドラッグハンドルの追加 (右端)
+    const dragHandle = document.createElement('span');
+    dragHandle.classList.add('drag-handle');
+    dragHandle.textContent = '☰';
+    slotElement.appendChild(dragHandle);
+}
+
+
+
+
+/**
+ * セットリストの指定されたスロットに曲を追加する。
+ * @param {HTMLElement} slotElement - 曲を追加するセットリストのスロット要素。
+ * @param {string} itemId - 曲のユニークなID。
+ * @param {string} songName - 曲名。
+ * @param {Object} options - 曲のオプション。
+ * @param {string} albumClass - 曲が属するアルバムのクラス名 (例: 'album1', 'album2')。
+ */
+function addSongToSlot(slotElement, itemId, songName, options, albumClass) {
+    console.log(`[addSongToSlot] Adding song ${songName} (${itemId}) to slot ${slotElement.dataset.slotIndex}. Album: ${albumClass}`);
+    console.log(`[addSongToSlot] Options received:`, options);
+
+    // スロットの内容をクリア
+    clearSlotContent(slotElement);
+
+    // 新しい曲要素のデータ属性を設定
+    slotElement.dataset.itemId = itemId;
+    slotElement.dataset.songName = songName;
+    
+    // オプションが「存在しうるか」を示すデータ属性 (dataset.isShortVersionなど)
+    // ここで Boolean 値を文字列 'true' / 'false' に変換して保存
+    slotElement.dataset.isShortVersion = options.isShortVersion ? 'true' : 'false';
+    slotElement.dataset.hasSeOption = options.hasSeOption ? 'true' : 'false';
+    slotElement.dataset.drumsoloOption = options.drumsoloOption ? 'true' : 'false'; // ここを修正
+
+    // チューニングやBPMは文字列としてそのまま保存
+    slotElement.dataset.rGt = options.rGt || ''; 
+    slotElement.dataset.lGt = options.lGt || '';
+    slotElement.dataset.bass = options.bass || '';
+    slotElement.dataset.bpm = options.bpm || '';
+    slotElement.dataset.chorus = options.chorus || 'false'; // 'true'/'false'文字列を期待
+
+    // チェックボックスの現在の状態を示すデータ属性
+    slotElement.dataset.short = options.short ? 'true' : 'false';
+    slotElement.dataset.seChecked = options.seChecked ? 'true' : 'false';
+    slotElement.dataset.drumsoloChecked = options.drumsoloChecked ? 'true' : 'false';
+
+
+    const isAllowMultiple = (originalDraggedElement && originalDraggedElement.dataset.allowMultiple === 'true') || (options.allowMultiple === true);
+        currentTouchDraggedOriginalElement;
+    if (originalDraggedElement && originalDraggedElement.dataset.allowMultiple === 'true') {
+        slotElement.dataset.allowMultiple = 'true';
+    } else {
+        delete slotElement.dataset.allowMultiple; // 念のため
+    }
+
+
+    // クラスを追加してスタイルを適用
+    slotElement.classList.add('setlist-item', 'item', albumClass);
+    // チェックボックスの初期状態に応じてクラスも設定
+    slotElement.classList.toggle('short', options.short);
+    slotElement.classList.toggle('se-active', options.seChecked);
+    slotElement.classList.toggle('drumsolo-active', options.drumsoloChecked);
+
+    // スロットの pointer-events を 'auto' に設定（これでタップ・ドラッグ可能になる）
+    slotElement.style.pointerEvents = 'auto';
+    slotElement.style.touchAction = 'pan-y'; // タッチスクロールを許可
+
+    // スロットのコンテンツを更新（曲名やオプションの表示）
+    // updateSlotContent には options オブジェクトをそのまま渡す
+    updateSlotContent(slotElement, songName, options);
+
+    // イベントリスナーの再設定 (コンテンツが更新されたスロットに対して)
+    enableDragAndDrop(slotElement); // ★追加：コンテンツ更新後もイベントリスナーを有効にする
+
+    console.log(`[addSongToSlot] Successfully added song ${songName} to slot ${slotElement.dataset.slotIndex}.`);
+}
+
+
+// =============================================================================
+// イベントリスナーの登録と初期化
+// =============================================================================
+
+/**
+ * ドラッグ＆ドロップとダブルクリックを有効にする関数。
+ * @param {Element} element - 有効にする要素（アルバムリストのアイテムまたはセットリストのスロット）
+ */
+function enableDragAndDrop(element) {
+    element.removeEventListener("dragstart", handleDragStart);
+    element.removeEventListener("touchstart", handleTouchStart);
+    element.removeEventListener("touchmove", handleTouchMove);
+    element.removeEventListener("touchend", handleTouchEnd);
+    element.removeEventListener("touchcancel", handleTouchEnd);
+    element.removeEventListener("dblclick", handleDoubleClick);
+    element.removeEventListener("dragover", handleDragOver);
+    element.removeEventListener("drop", handleDrop);
+    element.removeEventListener("dragenter", handleDragEnter);
+    element.removeEventListener("dragleave", handleDragLeave);
+
+    if (element.classList.contains('item') || element.classList.contains('setlist-item')) {
+        if (!element.dataset.itemId) {
+            element.dataset.itemId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        }
+        if (!element.dataset.songName) {
+            const songNameElement = element.querySelector('.song-name') || element; 
+            element.dataset.songName = songNameElement.textContent.trim();
+        }
+        element.draggable = true;
+
+        element.addEventListener("dragstart", handleDragStart);
+        element.addEventListener("touchstart", handleTouchStart, { passive: false });
+        element.addEventListener("touchmove", handleTouchMove, { passive: false });
+        element.addEventListener("touchend", handleTouchEnd);
+        element.addEventListener("touchcancel", handleTouchEnd);
+        element.addEventListener("dblclick", handleDoubleClick);
+    }
+
+    if (element.classList.contains('setlist-slot')) {
+        element.addEventListener("dragover", handleDragOver);
+        element.addEventListener("drop", handleDrop);
+        element.addEventListener("dragenter", handleDragEnter);
+        element.addEventListener("dragleave", handleDragLeave);
+    }
+}
+
+// ページロード時の初期化処理
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("[DOMContentLoaded] Page loaded. Initializing application.");
+
+    // setlist 変数をここで確実に定義します
+    const setlist = document.getElementById('setlist');
+    if (!setlist) {
+        console.error("Error: #setlist element not found. Drag and drop functionality may be impaired.");
+    }
+
+
+    // --- ドラッグ＆ドロップ関連の初期設定 ---
+    document.querySelectorAll(".album-content .item").forEach(item => {
+        enableDragAndDrop(item);
+    });
+
+    // setlistがnullでないことを確認してから処理を進める
+    if (setlist) {
+        setlist.querySelectorAll(".setlist-slot").forEach((slot, index) => {
+            if (!slot.dataset.slotIndex) {
+                slot.dataset.slotIndex = index.toString();
+            }
+            enableDragAndDrop(slot);
+        });
+    } 
+    
+    // Global dragend listener (個々の要素ではなく、ドキュメント全体で監視)
+    document.addEventListener("dragend", finishDragging);
+
+
+    // --- 日付ドロップダウンの初期化と設定 ---
+    const setlistYear = document.getElementById('setlistYear');
+    const setlistMonth = document.getElementById('setlistMonth');
+
+    if (setlistYear) {
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear + 5; i >= currentYear - 30; i--) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            setlistYear.appendChild(option);
+        }
+    }
+    if (setlistMonth) {
+        for (let i = 1; i <= 12; i++) {
+            const option = document.createElement('option');
+            option.value = i.toString().padStart(2, '0');
+            option.textContent = i;
+            setlistMonth.appendChild(option);
+        }
+    }
+
+    if (setlistYear) setlistYear.addEventListener('change', updateDays);
+    if (setlistMonth) setlistMonth.addEventListener('change', updateDays);
+
+
+    // --- モーダル関連の初期設定 ---
+    const openPastSetlistsModalButton = document.getElementById('openPastSetlistsModal');
+    const pastSetlistsModal = document.getElementById('pastSetlistsModal');
+    const closePastSetlistsModalButton = document.getElementById('closePastSetlistsModalButton');
+    // 2025年
+    const open2025FromPastModalButton = document.getElementById('open2025FromPastModalButton');
+    const year2025DetailModal = document.getElementById('year2025DetailModal');
+    const close2025DetailModalButton = document.getElementById('close2025DetailModalButton');
+    // 2024年
+    const open2024FromPastModalButton = document.getElementById('open2024FromPastModalButton');
+    const year2024DetailModal = document.getElementById('year2024DetailModal');
+    const close2024DetailModalButton = document.getElementById('close2024DetailModalButton');
+
+    // 「過去セットリスト」モーダルの開閉
+    if (openPastSetlistsModalButton && pastSetlistsModal && closePastSetlistsModalButton) {
+        openPastSetlistsModalButton.addEventListener('click', () => pastSetlistsModal.classList.add('active'));
+        closePastSetlistsModalButton.addEventListener('click', () => pastSetlistsModal.classList.remove('active'));
+        pastSetlistsModal.addEventListener('click', (event) => {
+            if (event.target === pastSetlistsModal) pastSetlistsModal.classList.remove('active');
+        });
+    }
+
+    // 2025年セットリスト詳細モーダルの開閉
+    if (year2025DetailModal && close2025DetailModalButton) {
+        if (open2025FromPastModalButton) {
+            open2025FromPastModalButton.addEventListener('click', () => {
+                if (pastSetlistsModal) pastSetlistsModal.classList.remove('active');
+                year2025DetailModal.classList.add('active');
+            });
+        }
+        close2025DetailModalButton.addEventListener('click', () => year2025DetailModal.classList.remove('active'));
+        year2025DetailModal.addEventListener('click', (event) => {
+            if (event.target === year2025DetailModal) year2025DetailModal.classList.remove('active');
+        });
+    }
+
+        // 2024年セットリスト詳細モーダルの開閉
+    if (year2024DetailModal && close2024DetailModalButton) {
+        if (open2024FromPastModalButton) {
+            open2024FromPastModalButton.addEventListener('click', () => {
+                if (pastSetlistsModal) pastSetlistsModal.classList.remove('active');
+                year2024DetailModal.classList.add('active');
+            });
+        }
+        close2024DetailModalButton.addEventListener('click', () => year2024DetailModal.classList.remove('active'));
+        year2024DetailModal.addEventListener('click', (event) => {
+            if (event.target === year2024DetailModal) year2024DetailModal.classList.remove('active');
+        });
+    }
+
+    // モーダル内の setlist-link のクリックハンドラ (共有IDのロードとモーダルクローズ)
+    document.querySelectorAll('.setlist-link').forEach(link => {
+        link.addEventListener('click', (event) => {
+            const shareIdMatch = link.href.match(/\?shareId=([^&]+)/);
+            if (shareIdMatch) {
+                event.preventDefault();
+                const shareId = shareIdMatch[1];
+                const newUrl = `${window.location.origin}${window.location.pathname}?shareId=${shareId}`;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+
+                loadSetlistState().then(() => {
+                    console.log(`[setlist-link click] Setlist loaded from shareId: ${shareId}`);
+                    // ロードが完了したら、両方のモーダルが閉じていることを確認
+                    if (pastSetlistsModal) pastSetlistsModal.classList.remove('active');
+                    if (year2025DetailModal) year2025DetailModal.classList.remove('active');
+                }).catch(error => console.error("[setlist-link click] Error loading setlist:", error));
+            } else {
+                console.log("[setlist-link click] Standard link clicked, allowing default navigation.");
+                // 通常のリンクの場合もモーダルを閉じる
+                if (pastSetlistsModal) pastSetlistsModal.classList.remove('active');
+                if (year2025DetailModal) year2025DetailModal.classList.remove('active');
+            }
+        });
+    });
+
+    // --- 最終クリーンアップと初期ロード ---
+    loadSetlistState().then(() => {
+        console.log("[DOMContentLoaded] loadSetlistState finished. Performing final cleanup.");
+        hideSetlistItemsInMenu(); // 初期ロード後にアルバムメニューの表示を更新
+        // 初期ロード後、すべてのセットリストスロットのpointer-eventsを適切に設定
+        // 空のスロットもドロップ可能にするため、常に 'auto' に設定
+        document.querySelectorAll('.setlist-slot').forEach(slot => {
+            slot.style.pointerEvents = 'auto'; // すべてのスロットを常に auto に
+            slot.style.touchAction = 'pan-y'; // すべてのスロットを常に pan-y に
+        });
+    }).catch(error => {
+        console.error("[DOMContentLoaded] Error during loadSetlistState:", error);
+        hideSetlistItemsInMenu(); // エラー時もアルバムメニューの表示を更新
+    });
+});
