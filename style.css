@@ -1,0 +1,874 @@
+/* --- ベーススタイル --- */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    touch-action: auto;
+    -ms-touch-action: auto;
+}
+
+/* --- ドラッグ＆ドロップ時のハイライト --- */
+.drop-zone.drag-over {
+    background-color: #d1eaff;
+    border-color: #007bff;
+}
+
+/* --- セットリストのグリッドコンテナ --- */
+#setlist {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+    list-style: none;
+    padding: 10px;
+    background: #f0f0f0;
+    border: 1px solid #aaa;
+    margin: 10px;
+    min-height: 800px;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+}
+
+/* --- スロットのスタイル (空/埋まっているもの共通) --- */
+.setlist-slot {
+    border: 1px dashed #ccc;
+    background-color: #e9e9e9;
+    min-height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: #888;
+    font-size: 1em;
+    border-radius: 5px;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* セットリストにアイテムが入っているスロット */
+.setlist-slot.setlist-item {
+    border: 1px solid #ccc;
+    background-color: white;
+    pointer-events: auto;
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+}
+
+/* --- アルバム・セットリスト共通のアイテム（曲）のスタイル --- */
+.item {
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #aaa;
+    color: black;
+    background-color: white;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    box-sizing: border-box;
+    pointer-events: auto;
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+}
+
+.item-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+/* --- song-info-container のスタイル --- */
+.song-info-container {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+    box-sizing: border-box;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+/* --- 曲名とオプションのラッパー --- */
+.song-name-and-option {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.9em;
+    flex-grow: 1;
+    text-align: left;
+    min-width: 0;
+    flex-shrink: 1;
+    gap: 5px;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+/* --- チューニング・BPM・コーラス情報のスタイル（デフォルトはPC向け） --- */
+.additional-song-info {
+    font-size: 0.8em;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+    text-align: right;
+    padding-left: 10px;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+/* --- チェックボックスのラッパー共通スタイル --- */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    position: relative;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+/* --- チェックボックスのスタイル --- */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ccc;
+    background-color: #eee;
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    margin-right: 5px;
+    flex-shrink: 0;
+    vertical-align: middle;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* --- チェックマークのスタイル --- */
+input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+input[type="checkbox"]:checked::before {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* --- ドラッグ中の要素の透明度 (PC用) --- */
+.dragging {
+    opacity: 0.5;
+}
+
+/* --- ドラッグハンドルのスタイル --- */
+.drag-handle {
+    float: right;
+    padding: 0 8px;
+    cursor: grab;
+    font-size: 1.2em;
+    color: #888;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    margin-left: auto;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+
+/* --- ハンバーガーメニューボタン --- */
+.menu-button {
+    display: block;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 1000;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+.menu-button span {
+    position: absolute;
+    display: block;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background-color: #333;
+    transition: all 0.5s;
+}
+
+.menu-button span:nth-child(1){ top: 4px; }
+.menu-button span:nth-child(2){ top: 14px; }
+.menu-button span:nth-child(3){ bottom: 4px; }
+
+/* --- ハンバーガーメニューボタンが開いた時のアニメーション --- */
+.menu-button.open span:nth-child(1) { transform: translateY(10px) rotate(-315deg); }
+.menu-button.open span:nth-child(2) { opacity: 0; }
+.menu-button.open span:nth-child(3) { transform: translateY(-10px) rotate(315deg); }
+
+/* --- サイドメニューパネル --- */
+.menu {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 300px;
+    max-height: 100vh;
+    background: white;
+    box-shadow: -4px 0px 6px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    transition: right 0.3s ease-in-out;
+    z-index: 999;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+}
+
+.menu.open {
+    right: 0;
+}
+
+/* --- 閉じるボタン --- */
+.close-button {
+    position: absolute;
+    top: 25px;
+    right: 30px;
+    width: 30px;
+    height: 30px;
+    color: white;
+    font-size: 20px;
+    text-align: center;
+    line-height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+.close-button span {
+    position: absolute;
+    display: block;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background-color: #333;
+    transition: all 0.5s;
+}
+
+/* --- アルバムリスト（メニュー内のタブ） --- */
+.album-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    user-select: none;
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+}
+
+.album-list li {
+    padding: 10px;
+    background: #fffefe;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+.album-list li:hover {
+    background: #ddd;
+}
+
+/* --- アルバムごとの曲リスト --- */
+.album-content {
+    display: none;
+    padding: 5px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    margin: 0;
+    list-style: none;
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+}
+
+.album-content.active {
+    display: block;
+}
+
+/* --- アルバムタブとアイテムの共通スタイルと色指定 --- */
+/* 各アルバムの色設定は変更なし */
+.album-list li.album1-tab { background-color: #efefef; }
+.album1 { --album-color: #efefef; }
+.album-list li.album2-tab { background-color: rgba(255, 255, 2, 0.733); }
+.album2 { --album-color: rgba(255, 255, 2, 0.733); }
+.album-list li.album3-tab { background-color: #000000; color: #ffffff; }
+.album3 { --album-color: #000000; }
+.album-list li.album4-tab { background-color: #018221; }
+.album4 { --album-color: #018221; }
+.album-list li.album5-tab { background-color: #9607a1; color: #ffffff; }
+.album5 { --album-color: #9607a1; }
+.album-list li.album6-tab { background-color: rgb(78, 84, 84); color: #ffffff; }
+.album6 { --album-color: rgb(78, 84, 84); }
+.album-list li.album7-tab { background-color: #04a6ec; color: #ffffff; }
+.album7 { --album-color: #04a6ec; }
+.album-list li.album8-tab { background-color: #f3ab37; }
+.album8 { --album-color: #f3ab37; }
+.album-list li.album9-tab { background-color: #64dc68; }
+.album9 { --album-color: #64dc68; }
+.album-list li.album10-tab { background-color: #ff07de; }
+.album10 { --album-color: #ff07de; }
+.album-list li.album11-tab { background-color: #ff0000; color: #ffffff; }
+.album11 { --album-color: #ff0000; }
+.album-list li.album12-tab { background-color: #ff6200; }
+.album12 { --album-color: #ff6200; }
+.album-list li.album13-tab { background-color: #41fff9; }
+.album13 { --album-color: #41fff9; }
+.album-list li.album14-tab { background-color: #ffffff; }
+.album14 { --album-color: #ffffff; }
+
+
+/* --- リストアイテム（アルバム内の各曲）のスタイル --- */
+.album-list li.album1, .album1,
+.album-list li.album2, .album2,
+.album-list li.album3, .album3,
+.album-list li.album4, .album4,
+.album-list li.album5, .album5,
+.album-list li.album6, .album6,
+.album-list li.album7, .album7,
+.album-list li.album8, .album8,
+.album-list li.album9, .album9,
+.album-list li.album10, .album10,
+.album-list li.album11, .album11,
+.album-list li.album12, .album12,
+.album-list li.album13, .album13,
+.album-list li.album14, .album14 {
+    position: relative;
+    background: white;
+    color: black;
+    padding-left: 30px;
+    border: 1px solid #aaa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+/* --- 左端のカラー帯 --- */
+.album-list li.album1::before, .album1::before, .setlist-item.album1::before,
+.album-list li.album2::before, .album2::before, .setlist-item.album2::before,
+.album-list li.album3::before, .album3::before, .setlist-item.album3::before,
+.album-list li.album4::before, .album4::before, .setlist-item.album4::before,
+.album-list li.album5::before, .album5::before, .setlist-item.album5::before,
+.album-list li.album6::before, .album6::before, .setlist-item.album6::before,
+.album-list li.album7::before, .album7::before, .setlist-item.album7::before,
+.album-list li.album8::before, .album8::before, .setlist-item.album8::before,
+.album-list li.album9::before, .album9::before, .setlist-item.album9::before,
+.album-list li.album10::before, .album10::before, .setlist-item.album10::before,
+.album-list li.album11::before, .album11::before, .setlist-item.album11::before,
+.album-list li.album12::before, .album12::before, .setlist-item.album12::before,
+.album-list li.album13::before, .album13::before, .setlist-item.album13::before,
+.album-list li.album14::before, .album14::before, .setlist-item.album14::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+}
+.album-list li.album1::before, .album1::before, .setlist-item.album1::before { background-color: #efefef; }
+.album-list li.album2::before, .album2::before, .setlist-item.album2::before { background-color: rgba(255, 255, 2, 0.733); }
+.album-list li.album3::before, .album3::before, .setlist-item.album3::before { background-color: #000000; }
+.album-list li.album4::before, .album4::before, .setlist-item.album4::before { background-color: #018221; }
+.album-list li.album5::before, .album5::before, .setlist-item.album5::before { background-color: #9607a1; }
+.album-list li.album6::before, .album6::before, .setlist-item.album6::before { background-color: rgb(78, 84, 84); }
+.album-list li.album7::before, .album7::before, .setlist-item.album7::before { background-color: #04a6ec; }
+.album-list li.album8::before, .album8::before, .setlist-item.album8::before { background-color: #f3ab37; }
+.album-list li.album9::before, .album9::before, .setlist-item.album9::before { background-color: #64dc68; }
+.album-list li.album10::before, .album10::before, .setlist-item.album10::before { background-color: #ff07de; }
+.album-list li.album11::before, .album11::before, .setlist-item.album11::before { background-color: #ff0000; }
+.album-list li.album12::before, .album12::before, .setlist-item.album12::before { background-color: #ff6200; }
+.album-list li.album13::before, .album13::before, .setlist-item.album13::before { background-color: #41fff9; }
+.album-list li.album14::before, .album14::before, .setlist-item.album14::before { background-color: #ffffff; }
+
+/* --- ヘッダーとボタンの配置 --- */
+.header-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    justify-content: flex-start;
+    padding: 10px;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+/* --- セットリスト情報 (日付・会場) コンテナ --- */
+.setlist-info-container {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-right: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+.setlist-info-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+}
+
+.setlist-info-item label {
+    font-size: 0.9em;
+    color: #555;
+    min-width: 5px;
+    text-align: right;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+/* 日付のドロップダウン要素のスタイル */
+.setlist-info-item select {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9em;
+    flex-grow: 0;
+    max-width: 80px;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+/* 会場入力の幅は少し広めに */
+.setlist-info-item input[type="text"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 200px;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+/* --- 共有ボタンとPDFボタンのスタイルを調整 --- */
+#shareSetlistButton,
+#generatePdfButton {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+    padding: 5px 10px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    flex-shrink: 0;
+    min-width: 60px;
+    height: 35px;
+    margin-left: 10px;
+    margin-right: 5px;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+.send-all-button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+    padding: 5px 10px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+/* ドラッグ中のクローン要素（スマホ用）のスタイルを強化 */
+.touch-dragging-clone {
+    pointer-events: none;
+    position: fixed !important;
+    z-index: 10000 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid #007bff;
+    background-color: white !important;
+    color: black !important;
+    touch-action: none;
+    -ms-touch-action: none;
+    opacity: 1 !important;
+    transform: scale(1.05);
+    transition: none;
+    cursor: grabbing;
+    box-sizing: border-box;
+}
+
+/* 万が一、内部要素が隠れるようなスタイルが適用されてしまうのを防ぐための追加ルール */
+.touch-dragging-clone .song-info-container,
+.touch-dragging-clone .song-name-and-option,
+.touch-dragging-clone .song-name,
+.touch-dragging-clone .item-options,
+.touch-dragging-clone .checkbox-wrapper,
+.touch-dragging-clone .checkbox-wrapper span {
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: inherit !important;
+    background-color: transparent !important;
+    display: flex !important;
+}
+
+/* 自由入力曲の入力欄 */
+.custom-song-input {
+    /* スロット内の自由入力曲のテキストボックス */
+    padding: 2px 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 16px; /* モバイルズーム防止 */
+    flex-grow: 1;
+    min-width: 80px;
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+/* --- カスタムメッセージボックスのスタイル --- */
+#customMessageBox {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    display: none;
+}
+
+/* 編集可能な曲名用のスタイル */
+.setlist-slot .editable-song-name {
+    border-bottom: 1px dashed #777;
+    min-width: 50px;
+    display: inline-block;
+    padding: 2px 0;
+    cursor: text;
+    font-size: 16px; /* モバイルズーム防止 */
+}
+
+/* 編集中のスタイル */
+.setlist-slot .editable-song-name:focus {
+    outline: none;
+    border-bottom: 1px solid #007bff;
+    background-color: #f0f8ff;
+}
+
+/* 自由入力曲アイテムのスタイル */
+.custom-song-item {
+    font-style: italic;
+    border: 2px dashed #ccc;
+}
+
+/* ドラッグ中のスタイルも少し変えると分かりやすい */
+.custom-song-item.dragging {
+    opacity: 0.7;
+    border: 2px dashed #333;
+}
+
+/* メッセージボックスの種類に応じた色分け（JSの showMessage 関数と連携） */
+#customMessageBox.success {
+    background-color: rgba(40, 167, 69, 0.85);
+}
+
+#customMessageBox.error {
+    background-color: rgba(220, 53, 69, 0.85);
+}
+
+#customMessageBox.info {
+    background-color: rgba(23, 162, 184, 0.85);
+}
+
+/* --- アニメーション --- */
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInFromLeft {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+/* --- モバイル向け（@media query） --- */
+@media (max-width: 767px) {
+    body { margin: 1px; padding: 0; }
+    h2, h3 { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 60px 10px 10px;
+        box-sizing: border-box;
+    }
+    .menu-button { 
+    position: absolute; 
+    top: 15px; 
+    right: 15px; 
+    z-index: 9999;   
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    }
+    .close-button {
+    z-index: 9999;   
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    }
+    .menu { width: 200px; height: calc(100vh - 50px); }
+    .album-list li { font-size: 14px; }
+    .album1-tab, .album2-tab, .album3-tab, .album4-tab, .album5-tab, .album6-tab, .album7-tab,
+    .album8-tab, .album9-tab, .album10-tab, .album11-tab, .album12-tab, .album13-tab, .album14-tab {
+        user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+    }
+    .album-list li.album1-tab, .album-list li.album2-tab, .album-list li.album3-tab,
+    .album-list li.album4-tab, .album-list li.album5-tab, .album-list li.album6-tab,
+    .album-list li.album7-tab, .album-list li.album8-tab, .album-list li.album9-tab,
+    .album-list li.album10-tab, .album-list li.album11-tab, .album-list li.album12-tab,
+    .album-list li.album13-tab, .album-list li.album14-tab {
+        padding: 8px 15px;
+    }
+    .album-list { padding: 0; }
+    .album-content { padding: 5px; }
+    .album-list li { padding: 8px 15px; }
+    .album-list li::before { width: 15px; }
+    #setlist { min-height: 500px; margin: 5px; max-height: none; }
+    .item { padding-left: 30px; transition: transform 0.2s ease, opacity 0.2s ease; }
+
+    .item-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+    .item.dragging { opacity: 0.5; transform: scale(1.05); }
+    .song-info-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    .song-name-and-option {
+        margin-bottom: 2px;
+        gap: 3px;
+        font-size: 0.9em;
+        width: 100%;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .additional-song-info { display: none; }
+    .setlist-info-container {
+        flex-direction: column;
+        gap: 5px;
+        margin-right: 0;
+        width: calc(100% - 10px);
+        align-items: flex-start;
+    }
+    .setlist-info-item {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 5px;
+        width: 100%;
+        justify-content: flex-start;
+        white-space: normal;
+    }
+    .setlist-info-item.venue-and-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        width: 100%;
+    }
+    .setlist-info-item input[type="text"] {
+        flex-grow: 1;
+        min-width: 100px;
+        max-width: 180px;
+        box-sizing: border-box;
+        font-size: 16px; /* モバイルズーム防止 */
+    }
+    #shareSetlistButton, .send-all-button, #generatePdfButton {
+        position: static;
+        margin-left: 0;
+        margin-right: 0;
+        font-size: 14px;
+        padding: 4px 8px;
+        min-width: unset;
+        height: auto;
+    }
+    .setlist-info-item select {
+        font-size: 0.8em;
+        padding: 4px;
+        width: auto;
+        max-width: 90px;
+        box-sizing: border-box;
+    }
+}
+
+/* ハンバーガーメニュー内の「過去セットリスト」ボタンの基本スタイル */
+#openPastSetlistsModal {
+    background-color: #f0f0f0;
+    color: #333;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    font-size: 1.1em;
+    text-align: center;
+    width: calc(100% - 40px);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+#openPastSetlistsModal:hover { background-color: #afaeae; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); transform: translateY(-2px); }
+#openPastSetlistsModal:active { background-color: #6f6f6f; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transform: translateY(0); }
+
+@media (max-width: 767px) {
+    #openPastSetlistsModal { font-size: 1em; padding: 12px 15px; width: calc(100% - 30px); }
+}
+
+/* --- モーダルオーバーレイのスタイル --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+
+/* モーダルコンテンツのスタイル */
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    position: relative;
+    text-align: center;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease-in-out;
+    z-index: 10003;
+}
+.modal-overlay.active .modal-content { transform: translateY(0); }
+
+/* モーダル内の閉じるボタンのスタイル */
+.modal-content .close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2em;
+    cursor: pointer;
+    color: #888;
+    padding: 5px;
+    z-index: 10004;
+}
+.modal-content .close-button:hover { color: #333; }
+
+/* 年ボタンをグリッドで配置するスタイル */
+.past-years-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.past-years-grid .past-year-item {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.past-years-grid .past-year-item:hover { background-color: #0056b3; }
+
+/* 2025年詳細モーダル内のリンクのスタイル */
+.setlist-links { margin-top: 20px; text-align: left; }
+.setlist-link {
+    display: block;
+    padding: 10px 0;
+    font-size: 1.2em;
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.setlist-link:hover { color: #0056b3; text-decoration: underline; }
+.setlist-link:not(:last-child) { border-bottom: 1px solid #eee; margin-bottom: 5px; }
+
+/* ドラッグ元のスロットのプレースホルダー（半透明） */
+.setlist-slot.placeholder-slot {
+    opacity: 0.4;
+    background-color: #f5f5f5;
+    border-style: solid;
+}
