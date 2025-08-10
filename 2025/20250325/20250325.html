@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>セットリスト</title>
+    <link rel="stylesheet" href="../../style.css"/>
+    <link rel="icon" href="../../icon.png">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+ const firebaseConfig = {
+    apiKey: "AIzaSyDoYEh-KMwLSQLWsuooMrVGcMj3odfcWSg",
+    authDomain: "setlist-8f890.firebaseapp.com",
+    projectId: "setlist-8f890",
+    storageBucket: "setlist-8f890.firebasestorage.app",
+    messagingSenderId: "564380847667",
+    appId: "1:564380847667:web:941930a03161c96ceadd46",
+    measurementId: "G-3NH960W0WT",
+    databaseURL: "https://setlist-8f890-default-rtdb.firebaseio.com",
+  };
+
+    // Firebase アプリの初期化
+    firebase.initializeApp(firebaseConfig);
+
+    // Realtime Database のインスタンスを取得
+    const database = firebase.database();
+  </script>
+</head>
+<body>
+    
+
+<div class="header-container">
+    <div class="setlist-info-container">
+        <div class="setlist-info-item">
+            <label for="setlistYear"></label>
+            <select id="setlistYear"></select> 年
+            <select id="setlistMonth"></select> 月
+            <select id="setlistDay"></select> 日
+        </div>
+        <div class="setlist-info-item venue-and-buttons">
+            <label for="setlistVenue"></label>
+            <input type="text" id="setlistVenue" placeholder="会場名を入力">
+            <button id="shareSetlistButton" onclick="shareSetlist()">共有</button>
+            <button id="generatePdfButton" onclick="generateSetlistPdf()">PDF</button>
+        </div>
+    </div>
+    </div>
+    
+    <div class="setlist-container">
+        <ul id="setlist" class="setlist-grid">
+            <!-- 26個のスロットをここに配置 -->
+            <li class="setlist-slot" data-slot-index="0">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="1">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="2">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="3">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="4">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="5">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="6">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="7">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="8">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="9">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="10">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="11">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="12">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="13">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="14">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="15">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="16">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="17">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="18">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="19">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="20">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="21">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="22">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="23">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="24">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+<li class="setlist-slot" data-slot-index="25">
+  <span class="slot-number"></span>
+  <div class="song-info-container"></div>
+</li>
+
+        </ul>
+    </div>
+
+<!-- ハンバーガーメニュー -->
+<div class="menu-button" id="menuButton" onclick="toggleMenu()">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+<div class="menu" id="menu">
+    <div class="close-button" onclick="toggleMenu()"></div> <!-- ✖ボタン -->
+    
+    <h3>アルバムを選択</h3>
+    
+    <!-- アルバムリスト -->
+<ul class="album-list">
+    <li class="album1-tab" onclick="toggleAlbum(1)">SE・インスト</li>
+    <ul class="album-content" id="album1">
+        <li class="item album1" draggable="true" data-item-id="album1-001" data-song-name="SE">SE</li>
+        <li class="item album1" draggable="true" data-item-id="album1-002" data-song-name="MC">MC</li>
+        <li class="item album1" draggable="true" data-item-id="album1-003" data-song-name="インスト">インスト</li>
+        <li class="item album1" draggable="true" data-item-id="album1-004" data-song-name="ドラムソロ">ドラムソロ</li>
+        <li class="item album1 custom-song-item" 
+            draggable="true" 
+            data-item-id="album1-custom" 
+            data-song-name="自由入力曲"
+            data-allow-multiple="true">
+            <span class="song-name">　</span>
+        </li>
+        <li class="item album1" draggable="true" data-item-id="album1-005" data-song-name="Drum’n SAX SE">Drum’n SAX SE</li>
+        <li class="item album1" draggable="true" data-item-id="album1-006" data-song-name="SE（Timeless）" data-has-drumsolo-option="true">SE（Timeless）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-007" data-song-name="SE（THE ONE）" data-has-drumsolo-option="true">SE（THE ONE）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-008" data-song-name="SE（TYCOON）" data-has-drumsolo-option="true">SE（TYCOON）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-009" data-song-name="SE（UNSER）" data-has-drumsolo-option="true">SE（UNSER）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-010" data-song-name="SE（NEVER ENDING WORLD）" data-has-drumsolo-option="true">SE（NEVER ENDING WORLD）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-011" data-song-name="SE（EYEWALL）" data-has-drumsolo-option="true">SE（EYEWALL）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-012" data-song-name="SE（ENIGMASIS）" data-has-drumsolo-option="true">SE（ENIGMASIS）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-013" data-song-name="SE（über cozy universe）" data-has-drumsolo-option="true" >SE（über cozy universe）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-014" data-song-name="SE（WICKED boy）" data-has-drumsolo-option="true" >SE（WICKED boy）</li>
+        <li class="item album1" draggable="true" data-item-id="album1-015" data-song-name="和音 the stoic">和音 the stoic</li>
+        <li class="item album1" draggable="true" data-item-id="album1-016" data-song-name="over the stoic">over the stoic</li>
+        <li class="item album1" draggable="true" data-item-id="album1-017" data-song-name="Massive">Massive</li>
+        <li class="item album1" draggable="true" data-item-id="album1-018" data-song-name="CORE STREAM">CORE STREAM</li>
+        <li class="item album1" draggable="true" data-item-id="album1-019" data-song-name="Spreadown">Spreadown</li>
+        <li class="item album1" draggable="true" data-item-id="album1-020" data-song-name="to the world">to the world</li>
+        <li class="item album1" draggable="true" data-item-id="album1-021" data-song-name="ANOMALY奏者">ANOMALY奏者</li>
+        <li class="item album1" draggable="true" data-item-id="album1-022" data-song-name="Highlight!!">Highlight!!</li>
+        <li class="item album1" draggable="true" data-item-id="album1-023" data-song-name="JUMP">JUMP</li>
+    </ul>
+
+    <li class="album2-tab" onclick="toggleAlbum(2)">Timeless</li>
+    <ul class="album-content" id="album2">
+        <li class="item album2" draggable="true" data-item-id="album2-001" data-song-name="CHANCE!" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="128" data-chorus="">CHANCE!</li>
+        <li class="item album2" draggable="true" data-item-id="album2-002" data-song-name="トキノナミダ" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="198" data-chorus="">トキノナミダ</li>
+        <li class="item album2" draggable="true" data-item-id="album2-003" data-song-name="Rush" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="170" data-chorus="">Rush</li>
+        <li class="item album2" draggable="true" data-item-id="album2-004" data-song-name="D-tecnoLife" data-r-gt="Drop B" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="168" data-chorus="">D-tecnoLife</li>
+        <li class="item album2" draggable="true" data-item-id="album2-005" data-song-name="優しさの雫" data-r-gt="半" data-l-gt="Drop C♯ piezo" data-bass="5 半↓" data-bpm="84" data-chorus="">優しさの雫</li> 
+        <li class="item album2" draggable="true" data-item-id="album2-006" data-song-name="ai ta 心" data-r-gt="半" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="110" data-chorus="">ai ta 心</li>
+        <li class="item album2" draggable= "true" data-item-id="album2-007" data-song-name="Burst" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="110" data-chorus="克,要確認">Burst</li>
+        <li class="item album2" draggable="true" data-item-id="album2-008" data-song-name="Nitro" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="114" data-chorus="">Nitro</li>
+        <li class="item album2" draggable="true" data-item-id="album2-009" data-song-name="just Melody" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="125" data-chorus="">just Melody</li>
+        <li class="item album2" draggable="true" data-item-id="album2-010" data-song-name="Lump Of Affection" data-r-gt="半" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="95" data-chorus="">Lump Of Affection</li>
+        <li class="item album2" draggable="true" data-item-id="album2-011" data-song-name="扉" data-r-gt="半" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="" data-chorus="">扉</li>
+    </ul>
+
+    <li class="album3-tab" onclick="toggleAlbum(3)">BUGRIGHT</li>
+    <ul class="album-content" id="album3">
+        <li class="item album3" draggable="true" data-item-id="album3-001" data-song-name="ゼロの答" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="180" data-chorus="">ゼロの答</li>
+        <li class="item album3" draggable="true" data-item-id="album3-002" data-song-name="SHAMROCK" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="170" data-chorus="">SHAMROCK</li>
+        <li class="item album3" draggable="true" data-item-id="album3-003" data-song-name="Home 微熱39℃" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="128" data-chorus="">Home 微熱39℃</li>
+        <li class="item album3" draggable="true" data-item-id="album3-004" data-song-name="〜流れ・空虚・THIS WORD〜" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="178" data-chorus="">〜流れ・空虚・THIS WORD〜</li>
+        <li class="item album3" draggable="true" data-item-id="album3-005" data-song-name="Colors of the Heart" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="172" data-chorus="">Colors of the Heart</li>
+        <li class="item album3" draggable="true" data-item-id="album3-006" data-song-name="Live everyday as if it were the last day" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="128" data-chorus="">Live everyday as if it were the last day</li>
+        <li class="item album3" draggable="true" data-item-id="album3-007" data-song-name="シャルマンノウラ" data-r-gt="REG" data-l-gt="REG piezo" data-bass="5 REG" data-bpm="95" data-chorus="">シャルマンノウラ</li>
+        <li class="item album3" draggable="true" data-item-id="album3-008" data-song-name="一人じゃないから" data-r-gt="半↑" data-l-gt="Drop C♯ kapo2" data-bass="Drop C♯" data-bpm="82" data-chorus="">一人じゃないから</li>
+        <li class="item album3" draggable="true" data-item-id="album3-009" data-song-name="君の好きなうた" data-r-gt="Drop C♯" data-l-gt="Drop C♯ piezo" data-bass="Drop C♯" data-bpm="84" data-chorus="">君の好きなうた</li>
+        <li class="item album3" draggable="true" data-item-id="album3-010" data-song-name="51%" data-r-gt="Drop D" data-l-gt="REG" data-bass="5 REG" data-bpm="125" data-chorus="">51%</li>
+        <li class="item album3" draggable="true" data-item-id="album3-011" data-song-name="LIFEsize" data-r-gt="Drop B" data-l -gt="Drop B" data-bass="5 REG" data-bpm="172" data-chorus="">LIFEsize</li>
+        <li class="item album3" draggable="true" data-item-id="album3-012" data-song-name="EMPTY96" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="183" data-chorus="">EMPTY96</li>
+        <li class="item album3" draggable="true" data-item-id="album3-013" data-song-name="DISCORD" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="175" data-chorus="">DISCORD</li>
+    </ul>
+
+    <li class="album4-tab" onclick="toggleAlbum(4)">PROGLUTION</li>
+    <ul class="album-content" id="album4">
+        <li class="item album4" draggable="true" data-item-id="album4-001" data-song-name="Roots" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="180" data-chorus="">Roots</li>
+        <li class="item album4" draggable="true" data-item-id="album4-002" data-song-name="brand new ancient" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="Drop C" data-bpm="200" data-chorus="">brand new ancient</li>
+        <li class="item album4" draggable="true" data-item-id="album4-003" data-song-name="浮世CROSSING" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="175" data-chorus="">浮世CROSSING</li>
+        <li class="item album4" draggable="true" data-item-id="album4-004" data-song-name="病的希求日記" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="180" data-chorus="">病的希求日記</li>
+        <li class="item album4" draggable="true" data-item-id="album4-005" data-song-name="counting song-H" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Low A♯" data-bpm="175" data-chorus="">counting song-H</li>
+        <li class="item album4" draggable="true" data-item-id="album4-006" data-song-name="シャカビーチ" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="200" data-chorus="">シャカビーチ</li>
+        <li class="item album4" draggable="true" data-item-id="album4-007" data-song-name="GROOVY GROOVY GROOVY" data-r-gt="Drop B" data-l -gt="Drop B" data-bass="5 REG" data-bpm="115" data-chorus="">GROOVY GROOVY GROOVY</li>
+        <li class="item album4" draggable="true" data-item-id="album4-008" data-song-name="expod-digital" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="130" data-chorus="">expod-digital</li>
+        <li class="item album4" draggable="true" data-item-id="album4-009" data-song-name="UNKNOWN ORCHESTRA" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="4 半↓" data-bpm="140" data-chorus="">UNKNOWN ORCHESTRA</li>
+        <li class="item album4" draggable="true" data-item-id="album4-010" data-song-name="神集め" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="145" data-chorus="">神集め</li>
+        <li class="item album4" draggable="true" data-item-id="album4-011" data-song-name="ENERGY" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="165" data-chorus="">ENERGY</li>
+        <li class="item album4" draggable="true" data-item-id="album4-012" data-song-name="endscape" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="180" data-chorus="">endscape</li>
+        <li class="item album4" draggable="true" data-item-id="album4-013" data-song-name="心が指す場所と口癖そして君はついてくる" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="102" data-chorus="">心が指す場所と口癖そして君はついてくる</li>
+        <li class="item album4" draggable="true" data-item-id="album4-014" data-song-name="オトノハ" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">オトノハ</li>
+    </ul>
+
+    <li class="album5-tab" onclick="toggleAlbum(5)">AwakEVE</li>
+    <ul class="album-content" id="album5">
+        <li class="item album5" draggable="true" data-item-id="album5-001" data-song-name="激動" data-is-short-version="true" data-r-gt="Drop B" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="113" data-chorus="">激動</li>
+        <li class="item album5" draggable="true" data-item-id="album5-002" data-song-name="99/100 騙しの哲" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="153" data-chorus="">99/100 騙しの哲</li>
+        <li class="item album5" draggable="true" data-item-id="album5-003" data-song-name="美影意志" data-r-gt="Drop C♯" data-l-gt="半↓ piezo" data-bass="Drop C♯" data-bpm="88" data-chorus="">美影意志</li>
+        <li class="item album5" draggable="true" data-item-id="album5-004" data-song-name="コロナ" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="182" data-chorus="">コロナ</li>
+        <li class="item album5" draggable="true" data-item-id="album5-005" data-song-name="儚くも永久のカナシ" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="190" data-chorus="">儚くも永久のカナシ</li>
+        <li class="item album5" draggable="true" data-item-id="album5-006" data-song-name="earthy world" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="195" data-chorus="">earthy world</li>
+        <li class="item album5" draggable="true" data-item-id="album5-007" data-song-name="畢生皐月プロローグ" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="140" data-chorus="">畢生皐月プロローグ</li>
+        <li class="item album5" draggable="true" data-item-id="album5-008" data-song-name="アイ・アム Riri" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="85" data-chorus="">アイ・アム Riri</li>
+        <li class="item album5" draggable="true" data-item-id="album5-009" data-song-name="恋いしくて" data-r-gt="REG" data-l-gt="REG piezo" data-bass="Drop D" data-bpm="72" data-chorus="">恋いしくて</li>
+        <li class="item album5" draggable="true" data-item-id="album5-010" data-song-name="Forget" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="87" data-chorus="">Forget</li>
+        <li class="item album5" draggable="true" data-item-id="album5-011" data-song-name="Just break the limit!" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop C♯" data-bpm="177" data-chorus="">Just break the limit!</li>
+        <li class="item album5" draggable="true" data-item-id="album5-012" data-song-name="WAON THE STOIC" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="141" data-chorus="">WAON THE STOIC</li>
+        <li class="item album5" draggable="true" data-item-id="album5-013" data-song-name="ハルジオン" data-r-gt="Drop B" data-l -gt="Drop B" data-bass="5 REG" data-bpm="133" data-chorus="">ハルジオン</li>
+        <li class="item album5" draggable="true" data-item-id="album5-014" data-song-name="YURAYURA" data-is-short-version="true" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="Drop C♯" data-bpm="142" data-chorus="">YURAYURA</li>
+    </ul>
+
+    <li class="album6-tab" onclick="toggleAlbum(6)">LAST</li>
+    <ul class="album-content" id="album6">
+        <li class="item album6" draggable="true" data-item-id="album6-001" data-song-name="GOLD" data-r-gt="Drop B" data-l -gt="Drop B" data-bass="5 REG" data-bpm="185" data-chorus="">GOLD</li>
+        <li class="item album6" draggable="true" data-item-id="album6-002" data-song-name="world LOST world" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="196" data-chorus="克・信">world LOST world</li>
+        <li class="item album6" draggable="true" data-item-id="album6-003" data-song-name="スパルタ" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="145" data-chorus="">スパルタ</li>
+        <li class="item album6" draggable="true" data-item-id="album6-004" data-song-name="心とココロ" data-r-gt="Drop D" data-l-gt="REG" data-bass="Drop D" data-bpm="195" data-chorus="">心とココロ</li>
+        <li class="item album6" draggable="true" data-item-id="album6-005" data-song-name="the truth" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="Drop C" data-bpm="203" data-chorus="">the truth</li>
+        <li class="item album6" draggable="true" data-item-id="album6-006" data-song-name="バーレル" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="125" data-chorus="">バーレル</li>
+        <li class="item album6" draggable="true" data-item-id="album6-007" data-song-name="ハイ!問題作" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="185" data-chorus="">ハイ!問題作</li>
+        <li class="item album6" draggable="true" data-item-id="album6-008" data-song-name="closed POKER" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="135" data-chorus="">closed POKER</li>
+        <li class="item album6" draggable="true" data-item-id="album6-009" data-song-name="哀しみはきっと" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="105" data-chorus="">哀しみはきっと</li>
+        <li class="item album6" draggable="true" data-item-id="album6-010" data-song-name="CHANGE" data-is-short-version="true" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="165" data-chorus="">CHANGE</li>
+        <li class="item album6" draggable="true" data-item-id="album6-011" data-song-name="WANNA be BLILLIANT" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="178" data-chorus="">WANNA be BLILLIANT</li>
+        <li class="item album6" draggable="true" data-item-id="album6-012" data-song-name="君のまま" data-r-gt="Drop C♯" data-l-gt="半↓ piezo" data-bass="5 REG" data-bpm="76" data-chorus="">君のまま</li>
+        <li class="item album6" draggable="true" data-item-id="album6-013" data-song-name="GO-ON" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="4 半↓" data-bpm="190" data-chorus="">GO-ON</li>
+    </ul>
+
+    <li class="album7-tab" onclick="toggleAlbum(7)">LIFE 6 SENCE</li>
+    <ul class="album-content" id="album7">
+        <li class="item album7" draggable="true" data-item-id="album7-001" data-song-name="CORE PRIDE" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 半↓" data-bpm="185" data-chorus="">CORE PRIDE</li>
+        <li class="item album7" draggable="true" data-item-id="album7-002" data-song-name="いつか必ず死ぬことを忘れるな" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="220" data-chorus="">いつか必ず死ぬことを忘れるな</li>
+        <li class="item album7" draggable="true" data-item-id="album7-003" data-song-name="一石を投じるTokyo Midnight Sun" data-r-gt="半↓" data-l-gt="半↓" data-bass="5 REG" data-bpm="102" data-chorus="">一石を投じるTokyo Midnight Sun</li>
+        <li class="item album7" draggable="true" data-item-id="album7-004" data-song-name="ace of ace" data-r-gt="Drop D" data-l-gt="REG" data-bass="5 REG" data-bpm="202" data-chorus="">ace of ace</li>
+        <li class="item album7" draggable="true" data-item-id="album7-005" data-song-name="NO.1" data-r-gt="Drop B" data-l -gt="Drop B" data-bass="5 REG" data-bpm="133" data-chorus="">NO.1</li>
+        <li class="item album7" draggable="true" data-item-id="album7-006" data-song-name="クオリア" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="77" data-chorus="">クオリア</li>
+        <li class="item album7" draggable="true" data-item-id="album7-007" data-song-name="シークレット" data-r-gt="Drop D" data-l-gt="REG" data-bass="Drop D" data-bpm="84" data-chorus="">シークレット</li>
+        <li class="item album7" draggable="true" data-item-id="album7-008" data-song-name="勝者臆病者" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="130" data-chorus="">勝者臆病者</li>
+        <li class="item album7" draggable="true" data-item-id="album7-009" data-song-name="６つの風" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="145" data-chorus="">６つの風</li>
+        <li class="item album7" draggable="true" data-item-id="album7-010" data-song-name="一億分の一の小説" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="193" data-chorus="">一億分の一の小説</li>
+        <li class="item album7" draggable="true" data-item-id="album7-011" data-song-name="MONDO PIECE" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop C♯" data-bpm="192" data-chorus="">MONDO PIECE</li>
+        <li class="item album7" draggable="true" data-item-id="album7-012" data-song-name="白昼夢" data-r-gt="Drop C♯" data-l-gt="Drop C♯ piezo" data-bass="Drop C♯" data-bpm="180" data-chorus="">白昼夢</li>
+    </ul>
+
+    <li class="album8-tab" onclick="toggleAlbum(8)">THE ONE</li>
+    <ul class="album-content" id="album8">
+        <li class="item album8" draggable="true" data-item-id="album8-001" data-song-name="7th Trigger" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="210" data-chorus="">7th Trigger</li>
+        <li class="item album8" draggable="true" data-item-id="album8-002" data-song-name="Don't think feel" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="195" data-chorus="克・信">Don't think feel</li>
+        <li class="item album8" draggable="true" data-item-id="album8-003" data-song-name="LIMITLESS" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="140" data-chorus="">LIMITLESS</li>
+        <li class="item album8" draggable="true" data-item-id="album8-004" data-song-name="23ワード" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="102" data-chorus="">23ワード</li>
+        <li class="item album8" draggable="true" data-item-id="album8-005" data-song-name="KINJITO" data-is-short-version="true" data-r-gt="Drop B" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="112" data-chorus="">KINJITO</li>
+        <li class="item album8" draggable="true" data-item-id="album8-006" data-song-name="THE OVER" data-r-gt="AG Drop D" data-l-gt="Drop C piezo" data-bass="Drop D" data-bpm="190" data-chorus="">THE OVER</li>
+        <li class="item album8" draggable="true" data-item-id="album8-007" data-song-name="此処から" data-r-gt="REG" data-l-gt="REG (AG)" data-bass="Drop C♯" data-bpm="96" data-chorus="">此処から</li>
+        <li class="item album8" draggable="true" data-item-id="album8-008" data-song-name="REVERSI" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="224" data-chorus="">REVERSI</li>
+        <li class="item album8" draggable="true" data-item-id="album8-009" data-song-name="バーベル" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="210~140" data-chorus="">バーベル</li>
+        <li class="item album8" draggable="true" data-item-id="album8-010" data-song-name="BABY BORN & GO" data-is-short-version="true" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="200" data-chorus="">BABY BORN & GO</li>
+        <li class="item album8" draggable="true" data-item-id="album8-011" data-song-name="AWAYOKUBA-斬る" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="215" data-chorus="">AWAYOKUBA-斬る</li>
+        <li class="item album8" draggable="true" data-item-id="album8-012" data-song-name="NOWHERE boy" data-r-gt="REG" data-l-gt="REG (AG)" data-bass="Drop C♯" data-bpm="83" data-chorus="">NOWHERE boy</li>
+    </ul>
+
+    <li class="album9-tab" onclick="toggleAlbum(9)">Ø choir</li>
+    <ul class="album-content" id="album9">
+        <li class="item album9" draggable="true" data-item-id="album9-001" data-song-name="零HERE～SE～" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">零HERE～SE～</li>
+        <li class="item album9" draggable="true" data-item-id="album9-002" data-song-name="IMPACT" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 半↓" data-bpm="138" data-chorus="">IMPACT</li>
+        <li class="item album9" draggable="true" data-item-id="album9-003" data-song-name="誰が言った" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="102" data-chorus="">誰が言った</li>
+        <li class="item album9" draggable="true" data-item-id="album9-004" data-song-name="ナノ・セカンド" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="140" data-chorus="">ナノ・セカンド</li>
+        <li class="item album9" draggable="true" data-item-id="album9-005" data-song-name="ナノ・セカンド AX" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="140" data-chorus="">ナノ・セカンドAX</li>
+        <li class="item album9" draggable="true" data-item-id="album9-006" data-song-name="Fight For Liberty" data-is-short-version="true" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="200" data-chorus="">Fight For Liberty</li>
+        <li class="item album9" draggable="true" data-item-id="album9-007" data-song-name="ENOUGH-1" data-r-gt="半↓" data-l-gt="半↓" data-bass="5 半↓ アップライト" data-bpm="100" data-chorus="">ENOUGH-1</li>
+        <li class="item album9" draggable="true" data-item-id="album9-008" data-song-name="Kickが自由" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="195" data-chorus="">Kickが自由</li>
+        <li class="item album9" draggable="true" data-item-id="album9-009" data-song-name="a LOVELY TONE" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="95" data-chorus="">a LOVELY TONE</li>
+        <li class="item album9" draggable="true" data-item-id="album9-010" data-song-name="７日目の決意" data-r-gt="REG" data-l-gt="REG piezo" data-bass="5 REG" data-bpm="95" data-chorus="">７日目の決意</li>
+        <li class="item album9" draggable="true" data-item-id="album9-011" data-song-name="別世界" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="112" data-chorus="">別世界</li>
+        <li class="item album9" draggable="true" data-item-id="album9-012" data-song-name="Born Slippy" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="140" data-chorus="">Born Slippy</li>
+        <li class="item album9" draggable="true" data-item-id="album9-013" data-song-name="Wizard CLUB" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="220" data-chorus="">Wizard CLUB</li>
+        <li class="item album9" draggable="true" data-item-id="album9-014" data-song-name="在るべき形" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="210" data-chorus="">在るべき形</li>
+        <li class="item album9" draggable="true" data-item-id="album9-015" data-song-name="Ø choir" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="Low C" data-bpm="135" data-chorus="">Ø choir</li>
+    </ul>
+
+    <li class="album10-tab" onclick="toggleAlbum(10)">TYCOON</li>
+    <ul class="album-content" id="album10">
+        <li class="item album10" draggable="true" data-item-id="album10-001" data-song-name="TYCOON" data-has-se-option="true" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">TYCOON</li>
+        <li class="item album10" draggable="true" data-item-id="album10-002" data-song-name="Q.E.D." data-r-gt="Drop B" data-l -gt="Drop B" data-bass="5のみ1音↓" data-bpm="205" data-chorus="">Q.E.D.</li>
+        <li class="item album10" draggable="true" data-item-id="album10-003" data-song-name="シリウス" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="210" data-chorus="">シリウス</li>
+        <li class="item album10" draggable="true" data-item-id="album10-004" data-song-name="SHOUT LOVE" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="108" data-chorus="">SHOUT LOVE</li>
+        <li class="item album10" draggable="true" data-item-id="album10-005" data-song-name="IDEAL REALITY" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="113" data-chorus="">IDEAL REALITY</li>
+        <li class="item album10" draggable="true" data-item-id="album10-006" data-song-name="LONE WOLF" data-r-gt="Drop C♯" data-l-gt="半↓ piezo" data-bass="5 REG" data-bpm="87" data-chorus="">LONE WOLF</li>
+        <li class="item album10" draggable="true" data-item-id="album10-007" data-song-name="DECIDED" data-r-gt="REG" data-l-gt="Drop C" data-bass=" REG" data-bpm="184" data-chorus="">DECIDED</li>
+        <li class="item album10" draggable="true" data-item-id="album10-008" data-song-name="PRAYING RUN" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="108" data-chorus="">PRAYING RUN</li>
+        <li class="item album10" draggable="true" data-item-id="album10-009" data-song-name="ALL ALONE" data-r-gt="半↓" data-l-gt="半↓" data-bass="5 REG" data-bpm="100" data-chorus="">ALL ALONE</li>
+        <li class="item album10" draggable="true" data-item-id="album10-010" data-song-name="一滴の影響" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 半↓" data-bpm="190" data-chorus="">一滴の影響</li>
+        <li class="item album10" draggable="true" data-item-id="album10-011" data-song-name="ほんの少し" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="85" data-chorus="">ほんの少し</li>
+        <li class="item album10" draggable="true" data-item-id="album10-012" data-song-name="僕の言葉ではない これは僕たちの言葉" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Law A" data-bpm="100" data-chorus="克・信">僕の言葉ではない これは僕たちの言葉</li>
+        <li class="item album10" draggable="true" data-item-id="album10-013" data-song-name="WE ARE GO" data-is-short-version="true" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 半↓" data-bpm="187" data-chorus="">WE ARE GO</li>
+        <li class="item album10" draggable="true" data-item-id="album10-014" data-song-name="Collide" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="135" data-chorus="">Collide</li>
+        <li class="item album10" draggable="true" data-item-id="album10-015" data-song-name="奏全域" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="140" data-chorus="">奏全域</li>
+        <li class="item album10" draggable="true" data-item-id="album10-016" data-song-name="I LOVE THE WORLD" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="137" data-chorus="">I LOVE THE WORLD</li>
+        <li class="item album10" draggable="true" data-item-id="album10-017" data-song-name="エミュー" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 半↓" data-bpm="119" data-chorus="">エミュー</li>
+        <li class="item album10" draggable="true" data-item-id="album10-018" data-song-name="終焉" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="80" data-chorus="">終焉</li>
+    </ul>
+
+    <li class="album11-tab" onclick="toggleAlbum(11)">UNSER</li>
+    <ul class="album-content" id="album11">
+        <li class="item album11" draggable="true" data-item-id="album11-001" data-song-name="Making it Drive" data-r-gt="Drop D" data-l-gt="Drop C♯" data-bass="5REG" data-bpm="183" data-chorus="">Making it Drive</li>
+        <li class="item album11" draggable="true" data-item-id="album11-002" data-song-name="AFTER LIFE" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="75" data-chorus="">AFTER LIFE</li>
+        <li class="item album11" draggable="true" data-item-id="album11-003" data-song-name="Touch off" data-has-se-option="true" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="102" data-chorus="克・信">Touch off</li>
+        <li class="item album11" draggable="true" data-item-id="album11-004" data-song-name="境界" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="132" data-chorus="">境界</li>
+        <li class="item album11" draggable="true" data-item-id="album11-005" data-song-name="stay on" data-r-gt="Drop D" data-l-gt="Drop C" data-bass="5REG" data-bpm="100" data-chorus="克・信">stay on</li>
+        <li class="item album11" draggable="true" data-item-id="album11-006" data-song-name="First Sight" data-r-gt="Drop D" data-l-gt="Drop C♯" data-bass="5REG" data-bpm="77" data-chorus="">First Sight</li>
+        <li class="item album11" draggable="true" data-item-id="album11-007" data-song-name="ODD FUTURE" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Law A♯" data-bpm="131" data-chorus="">ODD FUTURE</li>
+        <li class="item album11" draggable="true" data-item-id="album11-008" data-song-name="無意味になる夜" data-r-gt="Drop D" data-l-gt="REG" data-bass="5 REG" data-bpm="78" data-chorus="">無意味になる夜</li>
+        <li class="item album11" draggable="true" data-item-id="album11-009" data-song-name="EDENへ" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Law A♯" data-bpm="158" data-chorus="">EDENへ</li>
+        <li class="item album11" draggable="true" data-item-id="album11-010" data-song-name="ConneQt" data-r-gt="HD" data-l-gt="REG" data-bass="5 REG" data-bpm="91" data-chorus="">ConneQt</li>
+        <li class="item album11" draggable="true" data-item-id="album11-011" data-song-name="OXYMORON" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="81" data-chorus="">OXYMORON</li>
+        <li class="item album11" draggable="true" data-item-id="album11-012" data-song-name="One Last Time" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="95" data-chorus="">One Last Time</li>
+        <li class="item album11" draggable="true" data-item-id="album11-013" data-song-name="ROB THE FRONTIER" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Law A♯" data-bpm="110" data-chorus="">ROB THE FRONTIER</li>
+        <li class="item album11" draggable="true" data-item-id="album11-014" data-song-name="GOOD and EVIL" data-r-gt="Drop D" data-l-gt="Drop C" data-bass="Law A♯" data-bpm="197" data-chorus="">GOOD and EVIL</li>
+        <li class="item album11" draggable="true" data-item-id="album11-015" data-song-name="UNSER" data-r-gt="" data-l-gt="" data-bass="" data-bpm="112-145" data-chorus="">UNSER</li>
+    </ul>
+
+    <li class="album12-tab" onclick="toggleAlbum(12)">30</li>
+    <ul class="album-content" id="album12">
+        <li class="item album12" draggable="true" data-item-id="album12-001" data-song-name="EN" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="143" data-chorus="克・信">EN</li>
+        <li class="item album12" draggable="true" data-item-id="album12-002" data-song-name="One stroke for freedom" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="140" data-chorus="">One stroke for freedom</li>
+        <li class="item album12" draggable="true" data-item-id="album12-003" data-song-name="えくぼ" data-r-gt="全半音↑" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="85" data-chorus="">えくぼ</li>
+        <li class="item album12" draggable="true" data-item-id="album12-004" data-song-name="OUR ALWAYS" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="150" data-chorus="">OUR ALWAYS</li>
+        <li class="item album12" draggable="true" data-item-id="album12-005" data-song-name="AVALANCHE" data-r-gt="Drop D" data-l-gt="Drop C♯" data-bass="5REG" data-bpm="160" data-chorus="">AVALANCHE</li>
+        <li class="item album12" draggable="true" data-item-id="album12-006" data-song-name="THUG LIFE" data-r-gt="REG" data-l-gt="Drop D" data-bass="5 REG" data-bpm="110" data-chorus="">THUG LIFE</li>
+        <li class="item album12" draggable="true" data-item-id="album12-007" data-song-name="SOUL" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="175" data-chorus="克・信">SOUL</li>
+        <li class="item album12" draggable="true" data-item-id="album12-008" data-song-name="来鳥江" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="180" data-chorus="克・信">来鳥江</li>
+        <li class="item album12" draggable="true" data-item-id="album12-009" data-song-name="NAMELY" data-r-gt="Drop D" data-l-gt="Drop C" data-bass="5 全音↓" data-bpm="105" data-chorus="">NAMELY</li>
+        <li class="item album12" draggable="true" data-item-id="album12-010" data-song-name="イーティー" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="200" data-chorus="">イーティー</li>
+        <li class="item album12 short" draggable="true" data-item-id="album12-011" data-song-name="AS ONE" data-is-short-version="true" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 半↓" data-bpm="145" data-chorus="克">AS ONE</li>
+        <li class="item album12" draggable="true" data-item-id="album12-012" data-song-name="HOURGLASS" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="159" data-chorus="">HOURGLASS</li>
+        <li class="item album12" draggable="true" data-item-id="album12-013" data-song-name="NEVER ENDING WORLD" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">NEVER ENDING WORLD</li>
+    </ul>
+
+    <li class="album13-tab" onclick="toggleAlbum(13)">ENIGMASIS</li>
+    <ul class="album-content" id="album13">
+        <li class="item album13" draggable="true" data-item-id="album13-001" data-song-name="ビタースウィート" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="190" data-chorus="">ビタースウィート</li>
+        <li class="item album13" draggable="true" data-item-id="album13-002" data-song-name="VICTOSPIN" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="118" data-chorus="克">VICTOSPIN</li>
+        <li class="item album13" draggable="true" data-item-id="album13-003" data-song-name="ENCORE AGAIN" data-r-gt="Drop C♯" data-l-gt="Drop D" data-bass="5 REG" data-bpm="160" data-chorus="">ENCORE AGAIN</li>
+        <li class="item album13" draggable="true" data-item-id="album13-004" data-song-name="FINALIST" data-r-gt="半音下げ" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="95" data-chorus="">FINALIST</li>
+        <li class="item album13" draggable="true" data-item-id="album13-005" data-song-name="echoOZ" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="118/195" data-chorus="">echoOZ</li>
+        <li class="item album13" draggable="true" data-item-id="album13-006" data-song-name="Don’t Think.Sing" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="190" data-chorus="">Don’t Think.Sing</li>
+        <li class="item album13" draggable="true" data-item-id="album13-007" data-song-name="α-Skill" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="84" data-chorus="">α-Skill</li>
+        <li class="item album13" draggable="true" data-item-id="album13-008" data-song-name="two Lies" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="83" data-chorus="">two Lies</li>
+        <li class="item album13" draggable="true" data-item-id="album13-009" data-song-name="THEORY" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 半↓" data-bpm="107" data-chorus="">THEORY</li>
+        <li class="item album13" draggable="true" data-item-id="album13-010" data-song-name="ピグマリオン" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="106-115" data-chorus="">ピグマリオン</li>
+        <li class="item album13" draggable="true" data-item-id="album13-011" data-song-name="ANOMALY奏者" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="110" data-chorus="">ANOMALY奏者</li>
+        <li class="item album13" draggable="true" data-item-id="album13-012" data-song-name="ENIGMASIS" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">ENIGMASIS</li>
+    </ul>
+
+    <li class="album14-tab" onclick="toggleAlbum(14)">EPIPHANY</li>
+    <ul class="album-content" id="album14">
+        <li class="item album14" draggable="true" data-item-id="album14-001" data-song-name="WICKED boy" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">WICKED boy</li>
+        <li class="item album14" draggable="true" data-item-id="album14-002" data-song-name="PHOENIX AX" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 半↓" data-bpm="162" data-chorus="">PHOENIX AX</li>
+        <li class="item album14" draggable="true" data-item-id="album14-003" data-song-name="NO MAP" data-r-gt="Drop C♯" data-l-gt="Drop D" data-bass="Law A♯" data-bpm="200" data-chorus="">NO MAP</li>
+        <li class="item album14" draggable="true" data-item-id="album14-004" data-song-name="Bye-Bye to you" data-r-gt="Drop D" data-l-gt="Drop C♯" data-bass="Law A♯" data-bpm="180" data-chorus="">Bye-Bye to you</li>
+        <li class="item album14" draggable="true" data-item-id="album14-005" data-song-name="EPIPHANY" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Law A♯" data-bpm="200" data-chorus="">EPIPHANY</li>
+        <li class="item album14" draggable="true" data-item-id="album14-006" data-song-name="MMH" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="123" data-chorus="">MMH</li>
+        <li class="item album14" draggable="true" data-item-id="album14-007" data-song-name="Only us" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">Only us</li>
+        <li class="item album14" draggable="true" data-item-id="album14-008" data-song-name="if…Hello" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">if…Hello</li>
+        <li class="item album14" draggable="true" data-item-id="album14-009" data-song-name="WINGS ever" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">WINGS ever</li>
+        <li class="item album14" draggable="true" data-item-id="album14-010" data-song-name="Eye's Sentry" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="118" data-chorus="">Eye's Sentry</li>
+        <li class="item album14" draggable="true" data-item-id="album14-011" data-song-name="MEMORIES of the END" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="77" data-chorus="">MEMORIES of the END</li>
+        <li class="item album14" draggable="true" data-item-id="album14-012" data-song-name="JUMP" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">JUMP</li>
+    </ul>
+
+    <li class="album15-tab" onclick="toggleAlbum(15)">※SINGLE ONLY</li>
+    <ul class="album-content" id="album15">
+        <li class="item album15" draggable="true" data-item-id="album15-001" data-song-name="MIXED-UP" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="122" data-chorus="">MIXED-UP</li>
+        <li class="item album15" draggable="true" data-item-id="album15-002" data-song-name="PRIME" data-r-gt="半" data-l-gt="Drop C♯" data-bass="半" data-bpm="140" data-chorus="確認">PRIME</li>
+        <li class="item album15" draggable="true" data-item-id="album15-003" data-song-name="SHINE" data-r-gt="nomal" data-l-gt="Drop D" data-bass="REG" data-bpm="84~94" data-chorus="">SHINE</li>
+        <li class="item album15" draggable="true" data-item-id="album15-004" data-song-name="Revolve" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="176" data-chorus="">Revolve</li>
+        <li class="item album15" draggable="true" data-item-id="album15-005" data-song-name="SORA" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="127" data-chorus="">SORA</li>
+        <li class="item album15" draggable="true" data-item-id="album15-006" data-song-name="僕に重なってくる今" data-r-gt="半↓" data-l-gt="半↓ piezo" data-bass="Drop C♯" data-bpm="94" data-chorus="">僕に重なってくる今</li>
+        <li class="item album15" draggable="true" data-item-id="album15-007" data-song-name="=" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="170" data-chorus="">=</li>
+        <li class="item album15" draggable="true" data-item-id="album15-008" data-song-name="EXTREAME" data-r-gt="Drop B" data-l-gt="Drop B" data-bass="5 REG" data-bpm="115" data-chorus="">EXTREAME</li>
+        <li class="item album15" draggable="true" data-item-id="album15-009" data-song-name="凛句" data-r-gt="REG" data-l-gt="REG piezo" data-bass="5 REG" data-bpm="180" data-chorus="">凛句</li>
+        <li class="item album15" draggable="true" data-item-id="album15-010" data-song-name="モノクローム" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="80" data-chorus="">モノクローム</li>
+        <li class="item album15" draggable="true" data-item-id="album15-011" data-song-name="Rainy" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="80" data-chorus="">Rainy</li>
+        <li class="item album15" draggable="true" data-item-id="album15-012" data-song-name="志" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="77" data-chorus="">志</li>
+        <li class="item album15" draggable="true" data-item-id="album15-013" data-song-name="over the stoic" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="125" data-chorus="">over the stoic</li>
+        <li class="item album15" draggable="true" data-item-id="album15-014" data-song-name="体温" data-r-gt="半↓" data-l-gt="1半↓ piezo" data-bass="5 REG♯" data-bpm="88" data-chorus="">体温</li>
+        <li class="item album15" draggable="true" data-item-id="album15-015" data-song-name="マダラ蝶"  data-r-gt="REG" data-l-gt="REG piezo" data-bass="Drop D" data-bpm="194" data-chorus="">マダラ蝶</li>
+        <li class="item album15" draggable="true" data-item-id="album15-016" data-song-name="撃破" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="180" data-chorus="克・信">撃破</li>
+        <li class="item album15" draggable="true" data-item-id="album15-017" data-song-name="D-tecnoRize" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="175" data-chorus="">D-tecnoRize</li>
+        <li class="item album15" draggable="true" data-item-id="album15-018" data-song-name="MINORI" data-r-gt="Drop C♯" data-l-gt="半↓ piezo" data-bass="半↓" data-bpm="70" data-chorus="">MINORI</li>
+        <li class="item album15" draggable="true" data-item-id="album15-019" data-song-name="若さ故エンテレケイア" data-is-short-version="true" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 半↓" data-bpm="150" data-chorus="">若さ故エンテレケイア</li>
+        <li class="item album15" draggable="true" data-item-id="album15-020" data-song-name="Ultimate" data-r-gt="半↓" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="90-120" data-chorus="">Ultimate</li>
+        <li class="item album15" draggable="true" data-item-id="album15-021" data-song-name="パニックワールド" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="143" data-chorus="">パニックワールド</li>
+        <li class="item album15" draggable="true" data-item-id="album15-022" data-song-name="魑魅魍魎マーチ" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="192" data-chorus="">魑魅魍魎マーチ</li>
+        <li class="item album15" draggable="true" data-item-id="album15-023" data-song-name="境地・マントラ" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="205" data-chorus="">境地・マントラ</li>
+        <li class="item album15" draggable="true" data-item-id="album15-024" data-song-name="THE SONG" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="Drop C♯" data-bpm="90" data-chorus="">THE SONG</li>
+        <li class="item album15" draggable="true" data-item-id="album15-025" data-song-name="Massive" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="REG" data-bpm="140" data-chorus="">Massive</li>
+        <li class="item album15" draggable="true" data-item-id="album15-026" data-song-name="LIFE" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="210" data-chorus="">LIFE</li>
+        <li class="item album15" draggable="true" data-item-id="album15-027" data-song-name="DEJAVU" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="117" data-chorus="">DEJAVU</li>
+        <li class="item album15" draggable="true" data-item-id="album15-028" data-song-name="言わなくて伝わる　あれは少し嘘だ" data-r-gt="半音下げ" data-l-gt="半音下げ" data-bass="5 REG" data-bpm="85" data-chorus="">言わなくて伝わる　あれは少し嘘だ</li>
+        <li class="item album15" draggable="true" data-item-id="album15-029" data-song-name="Forever Young" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 harf ↑" data-bpm="104" data-chorus="">Forever Young</li>
+        <li class="item album15" draggable="true" data-item-id="album15-030" data-song-name="RANGE" data-r-gt="Drop C♯" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="138" data-chorus="克">RANGE</li>
+        <li class="item album15" draggable="true" data-item-id="album15-031" data-song-name="Dis is TEKI" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="97" data-chorus="">Dis is TEKI</li>
+        <li class="item album15" draggable="true" data-item-id="album15-032" data-song-name="PLOT" data-r-gt="1音下げ" data-l-gt="1音下げ" data-bass="A♯EAD" data-bpm="195" data-chorus="">PLOT</li>
+        <li class="item album15" draggable="true" data-item-id="album15-033" data-song-name="CORE STREAM" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="175/110" data-chorus="">CORE STREAM</li>
+        <li class="item album15" draggable="true" data-item-id="album15-034" data-song-name="ONE LIFE" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">ONE LIFE</li>
+        <li class="item album15" draggable="true" data-item-id="album15-035" data-song-name="Spreadown" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="Drop D" data-bpm="190" data-chorus="">Spreadown</li>
+        <li class="item album15" draggable="true" data-item-id="album15-036" data-song-name="Teenage LOVE" data-r-gt="Drop D" data-l-gt="REG" data-bass="5 REG" data-bpm="153" data-chorus="">Teenage LOVE</li>
+        <li class="item album15" draggable="true" data-item-id="album15-037" data-song-name="LIVIN' IT UP" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 REG" data-bpm="110" data-chorus="確認">LIVIN' IT UP</li>
+        <li class="item album15" draggable="true" data-item-id="album15-038" data-song-name="BVCK" data-r-gt="Drop D" data-l-gt="Drop C♯" data-bass="5 REG" data-bpm="142" data-chorus="">BVCK</li>
+        <li class="item album15" draggable="true" data-item-id="album15-039" data-song-name="High Light!!" data-r-gt="Drop D" data-l-gt="Drop D" data-bass="5 REG" data-bpm="95" data-chorus="">High Light!!</li>
+        <li class="item album15" draggable="true" data-item-id="album15-040" data-song-name="über cozy universe" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">über cozy universe</li>
+        <li class="item album15" draggable="true" data-item-id="album15-041" data-song-name="Countdown" data-r-gt="" data-l-gt="" data-bass="" data-bpm="" data-chorus="">Countdown</li>
+        <li class="item album15" draggable="true" data-item-id="album15-042" data-song-name="PHOENIX" data-r-gt="Drop C" data-l-gt="Drop C" data-bass="5 半↓" data-bpm="162" data-chorus="">PHOENIX</li>
+    </ul>
+
+
+
+<div class="menu-section">
+    <button class="menu-item" id="openPastSetlistsModal">過去セットリスト</button>
+</div>
+
+<div id="pastSetlistsModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-button" id="closePastSetlistsModalButton">&times;</button>
+        <h2>過去セットリスト</h2>
+        <div class="past-years-grid">
+            <button class="past-year-item" data-year="2025" id="open2025FromPastModalButton">2025年</button>
+            <button class="past-year-item" data-year="2024" id="open2024FromPastModalButton">2024年</button>
+            <button class="past-year-item" data-year="2023">2023年</button>
+            <button class="past-year-item" data-year="2022">2022年</button>
+            <button class="past-year-item" data-year="2021">2021年</button>
+            <button class="past-year-item" data-year="2020">2020年</button>
+        </div>
+    </div>
+</div>
+
+<div id="year2025DetailModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-button" id="close2025DetailModalButton">×</button>
+        <h2>2025年のセットリスト</h2>
+        <div class="setlist-links">
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250324/20250324" class="setlist-link" data-setlist-date="2025/3/24" data-setlist-venue="HIROSHIMA CLUB QUATTRO 1日目">2025/3/24 HIROSHIMA CLUB QUATTRO 1日目</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250325/20250325" class="setlist-link" data-setlist-date="2025/3/25" data-setlist-venue="HIROSHIMA CLUB QUATTRO 2日目">2025/3/25 HIROSHIMA CLUB QUATTRO 2日目</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250329/20250329" class="setlist-link" data-setlist-date="2025/3/29" data-setlist-venue="2025 大港開唱 MEGAPORT Festival">2025/3/29 2025 大港開唱 MEGAPORT Festival</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250405/20250405" class="setlist-link" data-setlist-date="2025/4/05" data-setlist-venue="SUPER BEAVER 自主企画 『現場至上主義 2025』">2025/4/05 SUPER BEAVER 自主企画 『現場至上主義 2025』</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250419/20250419" class="setlist-link" data-setlist-date="2025/4/19" data-setlist-venue="MAIZURU PLAYBACK FES.2025 1日目">2025/4/19 MAIZURU PLAYBACK FES.2025 1日目</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250420/20250420" class="setlist-link" data-setlist-date="2025/4/20" data-setlist-venue="MAIZURU PLAYBACK FES.2025 2日目">2025/4/20 MAIZURU PLAYBACK FES.2025 2日目</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250504/20250504" class="setlist-link" data-setlist-date="2025/5/04" data-setlist-venue="VIVA LA ROCK 2025">2025/5/04 VIVA LA ROCK 2025</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250511/20250511" class="setlist-link" data-setlist-date="2025/5/11" data-setlist-venue="METROCK 2025">2025/5/11 METROCK 2025</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250606/20250606" class="setlist-link" data-setlist-date="2025/6/06" data-setlist-venue="滋賀 B-FLAT">2025/6/06 滋賀 B-FLAT（結成25周年）</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250611/20250611" class="setlist-link" data-setlist-date="2025/6/11" data-setlist-venue="Shibuya eggman">2025/6/11 Shibuya eggman</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250614/20250614" class="setlist-link" data-setlist-date="2025/6/14" data-setlist-venue="TOKYO DOME 1日目">2025/6/14 TOKYO DOME 1日目</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250615/20250615" class="setlist-link" data-setlist-date="2025/6/15" data-setlist-venue="TOKYO DOME 2日目">2025/6/15 TOKYO DOME 2日目</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250706/20250706" class="setlist-link" data-setlist-date="2025/7/6" data-setlist-venue="Zepp Fukuoka">2025/7/6 Zepp Fukuoka（デビュー20周年）</a></p>
+
+           <p><a href="https://uw0606.github.io/setlist/2025/20250719/20250719" class="setlist-link" data-setlist-date="2025/7/19" data-setlist-venue="JOIN ALIVE 2025">20257/19 JOIN ALIVE 2025</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250721/20250721" class="setlist-link" data-setlist-date="2025/7/21" data-setlist-venue="NUMBER SHOT 2025">2025/7/21 NUMBER SHOT 2025</a></p>
+
+          <p><a href="https://uw0606.github.io/setlist/2025/20250811/20250811" class="setlist-link" data-setlist-date="2025/8/11" data-setlist-venue="">2025/8/11 </a></p>
+        </div>
+    </div>
+</div>
+
+<div id="year2024DetailModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-button" id="close2024DetailModalButton">×</button>
+        <h2>2024年のセットリスト</h2>
+        <div class="setlist-links">
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/1/7" data-setlist-venue="東京ガーデンシアター">2024/1/7 東京ガーデンシアター</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/6" data-setlist-venue="KT Zepp Yokohama">2024/2/6 KT Zepp Yokohama</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/14" data-setlist-venue="弘前市民会館">2024/2/14 弘前市民会館</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/17" data-setlist-venue="SENDAI GIGS">2024/2/17 SENDAI GIGS</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/18" data-setlist-venue="SENDAI GIGS">2024/2/18 SENDAI GIGS</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/21" data-setlist-venue="福岡DRUM LOGOS">2024/2/21 福岡DRUM LOGOS</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/22" data-setlist-venue="Zepp Fukuoka">2024/2/22 Zepp Fukuoka</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/27" data-setlist-venue="THE BOTTOM LINE">2024/2/27 THE BOTTOM LINE</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/2/28" data-setlist-venue="Zepp Nagoya">2024/2/28 Zepp Nagoya</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/3/2" data-setlist-venue="OSAKA MUSE">2024/3/2 OSAKA MUSE</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/3/4" data-setlist-venue="Zepp Osaka Bayside">2024/3/4 Zepp Osaka Bayside</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/3/7" data-setlist-venue="恵比寿LIQUIDROOM">2024/3/7 恵比寿LIQUIDROOM</a></p>  -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/3/8" data-setlist-venue="Zepp Haneda">2024/3/8 Zepp Haneda</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/3/13" data-setlist-venue="札幌PENNY LANE 24">2024/3/13 札幌PENNY LANE 24</a></p>  -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/3/15" data-setlist-venue="Zepp Sapporo">2024/3/15 Zepp Sapporo</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/4/11" data-setlist-venue="The Republik (アメリカ)">2024/4/11 The Republik (アメリカ)</a></p> -->
+            <!-- <p><a href="https://uw0606.github.io/setlist/20250706/20250706" class="setlist-link" data-setlist-date="2024/4/29" data-setlist-venue="MAIZURU PLAYBACK FES. 2024">2024/4/29 MAIZURU PLAYBACK FES. 2024</a></p> -->
+        </div>
+    </div>
+</div>
+
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
+
+    <script src="../../fonts.js"></script>
+
+    <script src="20250325.js"></script>
+
+</body>
+
+</html>
