@@ -2086,9 +2086,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 { itemId: "album3-003", options: {} }, 
                 { itemId: "album5-002", options: { short: true } }, 
                 { itemId: "album15-019", options: {} }, 
-                { itemId: "album2-004", options: {} }, 
                 { itemId: "album13-005", options: {} }, 
-                { itemId: "album2-004", options: {} }, 
+                { itemId: "album15-019", options: {} }, 
+                { itemId: "album12-009", options: {} }, 
 
                 { itemId: "album1-022", options: {} }, 
                 
