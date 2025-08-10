@@ -2078,7 +2078,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { itemId: "album14-006", options: {} }, 
                 { itemId: "album10-008", options: {} }, 
                 { itemId: "album12-001", options: {} }, 
-                { itemId: "Album9-015", options: {} }, 
+                { itemId: "album9-015", options: {} }, 
             ];
 
             initialItems.forEach((item, index) => {
