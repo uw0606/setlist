@@ -1179,7 +1179,7 @@ async function generateSetlistPdf() {
             if (isAlbum1) {
                 simplePdfBody.push(`    ${titleText}`);
             } else {
-                simplePdfBody.push(`${currentItemNoSimple++}. ${titleText}`);
+                simplePdfBody.push(`${currentItemNoSimple++} ${titleText}`);
             }
 
             if (isAlbum1) {
