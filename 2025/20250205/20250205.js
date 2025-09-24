@@ -1,7 +1,6 @@
 // =============================================================================
 // グローバル変数とDOM要素の参照
 // =============================================================================
-
 let currentPcDraggedElement = null; // PCドラッグ中に参照する元の要素（主にアルバムからドラッグする際のクローン）
 let currentTouchDraggedClone = null; // ★追加：タッチドラッグ中に動かすクローン要素
 let draggingItemId = null; // ドラッグ中のアイテムID (PC/Mobile共通)
@@ -1270,11 +1269,7 @@ async function generateSetlistPdf() {
         6: { cellWidth: 17, halign: 'center' }
     },
     margin: { top: topMargin, right: 10, bottom: 10, left: leftMargin },
-    didDrawPage: function (data) {
-        detailedPdf.setFontSize(10);
-        detailedPdf.setFont('NotoSansJP', 'normal');
-        detailedPdf.text('Page ' + detailedPdf.internal.getNumberOfPages(), detailedPdf.internal.pageSize.getWidth() - 10, detailedPdf.internal.pageSize.getHeight() - 10, { align: 'right' });
-    }
+
 });
 
         const detailedFilename = `セットリスト_詳細_${headerText.replace(/[ /]/g, '_') || '日付なし'}.pdf`;
