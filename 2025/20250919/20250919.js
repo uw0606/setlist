@@ -30,7 +30,8 @@ let currentTouchDraggedOriginalElement = null; // ★追加：モバイルのタ
 const album1ItemIds = [
     'album1-001', 'album1-002', 'album1-003', 'album1-004', 'album1-005', 
     'album1-006', 'album1-007', 'album1-008', 'album1-009', 'album1-010', 
-    'album1-011', 'album1-012', 'album1-013', 'album9-001', 'album10-001', 
+    'album1-011', 'album1-012', 'album1-013', 
+    'album9-001', 'album10-001', 
     'album11-015', 'album12-013', 'album13-012', 'album14-001', 'album15-040',
 ];
 
