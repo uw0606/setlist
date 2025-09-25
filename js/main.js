@@ -1284,7 +1284,7 @@ async function generateSetlistPdf() {
         registerJapaneseFont(simplePdf);
         simplePdf.setFont('NotoSansJP', 'normal');
 
-        const simpleFontSize = 28;
+        const simpleFontSize = 26;
         const simpleLineHeight = simpleFontSize * 0.38;
         const simpleTopMargin = 30;
         const simpleLeftMargin = 25;
