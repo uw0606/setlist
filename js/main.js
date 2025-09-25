@@ -1186,7 +1186,7 @@ async function generateSetlistPdf() {
             if (isAlbum1) {
                 shareableTextContent += `    ${titleText}\n`;
             } else {
-                shareableTextContent += `${currentItemNoShareable++}. ${titleText}\n`;
+                shareableTextContent += `${currentItemNoShareable++}   ${titleText}\n`;
             }
         } else if (slot.classList.contains('setlist-slot-text')) {
             const textContent = slot.textContent.trim();
