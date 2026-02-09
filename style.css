@@ -394,8 +394,8 @@ input[type="checkbox"]:checked::before {
     .album12 { --album-color: #ff6200; }
 .album-list li.album13-tab { background-color: #41fff9; }
 .album13 { --album-color: #41fff9; }
-.album-list li.album14-tab { background-color: #dad8d8; }
-.album14 { --album-color: #dad8d8; }
+.album-list li.album14-tab { background-color: #cebb66; }
+.album14 { --album-color: #cebb66; }
 .album-list li.album15-tab { background-color: #ffffff; }
 .album15 { --album-color: #ffffff; }
 
@@ -464,7 +464,7 @@ input[type="checkbox"]:checked::before {
 .album-list li.album11::before, .album11::before, .setlist-item.album11::before { background-color: #ff0000; }
 .album-list li.album12::before, .album12::before, .setlist-item.album12::before { background-color: #ff6200; }
 .album-list li.album13::before, .album13::before, .setlist-item.album13::before { background-color: #41fff9; }
-.album-list li.album14::before, .album14::before, .setlist-item.album14::before { background-color: #dad8d8; }
+.album-list li.album14::before, .album14::before, .setlist-item.album14::before { background-color: #cebb66; }
 .album-list li.album15::before, .album15::before, .setlist-item.album15::before { background-color: #ffffff; }
 
 /* --- ヘッダーとボタンの配置 --- */
