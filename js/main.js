@@ -3373,6 +3373,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 2026年セットリスト詳細モーダルの開閉
+    if (year2026DetailModal && close2026DetailModalButton) {
+        if (open2026FromPastModalButton) {
+            open2026FromPastModalButton.addEventListener('click', () => {
+                closeModalWithBodyClass('pastSetlistsModal');
+                openModalWithBodyClass('year2026DetailModal');
+            });
+        }
+        close2026DetailModalButton.addEventListener('click', () => closeModalWithBodyClass('year2026DetailModal'));
+        year2026DetailModal.addEventListener('click', (event) => {
+            if (event.target === year2026DetailModal) closeModalWithBodyClass('year2026DetailModal');
+        });
+    }
+
+    
     // 2025年セットリスト詳細モーダルの開閉
     if (year2025DetailModal && close2025DetailModalButton) {
         if (open2025FromPastModalButton) {
