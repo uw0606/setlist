@@ -2615,6 +2615,7 @@ function updateSlotContent(slotElement, songName, options) {
 }
 
 
+
 /**
  * セットリストの指定されたスロットに曲を追加する。
  * @param {HTMLElement} slotElement - 曲を追加するセットリストのスロット要素。
