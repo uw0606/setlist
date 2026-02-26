@@ -2430,6 +2430,13 @@ function updateSlotContent(slotElement, songName, options) {
         const defaultName = isSeCustom ? 'SE(自由入力)' : '自由入力曲';
         const placeholderText = isSeCustom ? 'SE名を入力' : '曲名を入力';
 
+        // ★PDF文字化け対策：PDFライブラリが読み取るための隠しスパン★
+        const pdfFriendlySpan = document.createElement('span');
+        pdfFriendlySpan.classList.add('song-name');
+        pdfFriendlySpan.textContent = songName || defaultName;
+        pdfFriendlySpan.style.display = 'none'; // 画面には表示しない
+        songNameAndOption.appendChild(pdfFriendlySpan);
+
         const customNameInput = document.createElement('input');
         customNameInput.type = 'text';
         customNameInput.classList.add('custom-song-input');
@@ -2440,8 +2447,9 @@ function updateSlotContent(slotElement, songName, options) {
         }
         
         customNameInput.addEventListener('input', (e) => {
-            const newSongName = e.target.value.trim();
-            slotElement.dataset.songName = newSongName || defaultName; 
+            const newSongName = e.target.value.trim() || defaultName;
+            slotElement.dataset.songName = newSongName; 
+            pdfFriendlySpan.textContent = newSongName; // 裏側のスパンも同期更新
             console.log(`[custom-song-input] Song name updated to: ${slotElement.dataset.songName}`);
         });
 
@@ -2474,7 +2482,6 @@ function updateSlotContent(slotElement, songName, options) {
     let hasCustomOptions = false; 
     
     // ★★★ 自由入力曲(album1-custom) の場合のみプルダウンを生成 ★★★
-    // SE自由入力(isSeCustom) の場合はここをスキップします
     if (isCustom) {
         hasCustomOptions = true; 
 
@@ -2515,6 +2522,7 @@ function updateSlotContent(slotElement, songName, options) {
             slotElement.dataset.short = e.target.checked.toString();
             slotElement.classList.toggle('short', e.target.checked);
         });
+        shortVersionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'short';
         itemOptions.appendChild(shortVersionCheckboxWrapper);
     }
 
@@ -2525,6 +2533,7 @@ function updateSlotContent(slotElement, songName, options) {
             slotElement.dataset.seChecked = e.target.checked.toString();
             slotElement.classList.toggle('se-active', e.target.checked);
         });
+        seOptionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'se';
         itemOptions.appendChild(seOptionCheckboxWrapper);
     }
 
@@ -2535,6 +2544,7 @@ function updateSlotContent(slotElement, songName, options) {
             slotElement.dataset.drumsoloChecked = e.target.checked.toString();
             slotElement.classList.toggle('drumsolo-active', e.target.checked);
         });
+        drumsoloOptionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'drumsolo';
         itemOptions.appendChild(drumsoloOptionCheckboxWrapper);
     }
     
@@ -2571,7 +2581,6 @@ function updateSlotContent(slotElement, songName, options) {
         itemOptions.appendChild(specialEffectWrapper);
     }
 
-    // itemOptions を追加する判定
     if (hasAnyCheckboxOption || hasCustomOptions || (typeof specialEffectOptions !== 'undefined' && !isSpecialEffectExcluded)) {
         songNameAndOption.appendChild(itemOptions);
     }
@@ -2599,7 +2608,6 @@ function updateSlotContent(slotElement, songName, options) {
 
     slotElement.appendChild(songInfoContainer);
 
-    // ドラッグハンドルの追加 (右端)
     const dragHandle = document.createElement('span');
     dragHandle.classList.add('drag-handle');
     dragHandle.textContent = '☰';
