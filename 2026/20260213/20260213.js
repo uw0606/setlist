@@ -3466,43 +3466,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 setlistYear.value = "2026";
                 setlistMonth.value = "02";
                 updateDays();
-                setlistDay.value = "04";
-                console.log(`[DOMContentLoaded] Default date set to 2026/02/04.`);
+                setlistDay.value = "13";
+                console.log(`[DOMContentLoaded] Default date set to 2026/02/13.`);
             }
             if (setlistVenue) {
-                setlistVenue.value = "KT Zepp Yokohama 2日目";
-                console.log(`[DOMContentLoaded] Default venue set to KT Zepp Yokohama 2日目.`);
+                setlistVenue.value = "Zepp Osaka Bayside 1日目";
+                console.log(`[DOMContentLoaded] Default venue set to Zepp Osaka Bayside 1日目.`);
             }
 
             // 初期曲として配置したいアイテムのIDリストとオプション
             const initialItems = [
                 { itemId: "album1-009", options: { drumsoloChecked: true } }, 
 
-                { itemId: "album9-006", options: {} }, 
                 { itemId: "album15-043", options: {} }, 
                 { itemId: "album14-002", options: {} }, 
-                { itemId: "album14-003", options: {} }, 
+                { itemId: "album9-006", options: {} }, 
+                { itemId: "album15-026", options: {} }, 
+                { itemId: "album4-012", options: {} }, 
                 { itemId: "album4-001", options: {} }, 
-                { itemId: "album6-001", options: {} }, 
 
                 { itemId: "album1-002", options: {} }, 
 
-                { itemId: "album11-001", options: {} }, 
-                { itemId: "album8-010", options: {} }, 
-                { itemId: "album8-003", options: {} }, 
-                { itemId: "album7-001", options: {} }, 
+                { itemId: "album3-013", options: {} }, 
+                { itemId: "album10-003", options: {} }, 
                 { itemId: "album8-011", options: {} }, 
+                { itemId: "album3-012", options: {} }, 
+                { itemId: "album11-009", options: {} }, 
                 { itemId: "album15-044", options: {} }, 
-                { itemId: "album5-003", options: {} }, 
+                { itemId: "album15-024", options: {} }, 
 
-                { itemId: "album1-019", options: {} }, 
+                { itemId: "album15-025", options: {} }, 
                 
-                { itemId: "album9-014", options: {} }, 
-                { itemId: "album10-014", options: {} }, 
+                { itemId: "album6-003", options: {} }, 
+                { itemId: "album7-005", options: {} }, 
+                { itemId: "album14-003", options: {} }, 
                 { itemId: "album14-006", options: {} }, 
                 { itemId: "album14-005", options: {} }, 
                 { itemId: "album14-004", options: {} }, 
-                { itemId: "album11-002", options: {} }, 
+                { itemId: "album13-009", options: {} }, 
 
 
 

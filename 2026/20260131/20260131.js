@@ -3356,6 +3356,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const openPastSetlistsModalButton = document.getElementById('openPastSetlistsModal');
     const pastSetlistsModal = document.getElementById('pastSetlistsModal');
     const closePastSetlistsModalButton = document.getElementById('closePastSetlistsModalButton');
+    // 2026年
+    const open2026FromPastModalButton = document.getElementById('open2026FromPastModalButton');
+    const year2026DetailModal = document.getElementById('year2026DetailModal');
+    const close2026DetailModalButton = document.getElementById('close2026DetailModalButton');
     // 2025年
     const open2025FromPastModalButton = document.getElementById('open2025FromPastModalButton');
     const year2025DetailModal = document.getElementById('year2025DetailModal');
@@ -3374,6 +3378,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 2026年セットリスト詳細モーダルの開閉
+    if (year2026DetailModal && close2026DetailModalButton) {
+        if (open2026FromPastModalButton) {
+            open2026FromPastModalButton.addEventListener('click', () => {
+                closeModalWithBodyClass('pastSetlistsModal');
+                openModalWithBodyClass('year2026DetailModal');
+            });
+        }
+        close2026DetailModalButton.addEventListener('click', () => closeModalWithBodyClass('year2026DetailModal'));
+        year2026DetailModal.addEventListener('click', (event) => {
+            if (event.target === year2026DetailModal) closeModalWithBodyClass('year2026DetailModal');
+        });
+    }
+
+    
     // 2025年セットリスト詳細モーダルの開閉
     if (year2025DetailModal && close2025DetailModalButton) {
         if (open2025FromPastModalButton) {

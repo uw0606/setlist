@@ -58,7 +58,7 @@ const album1ItemIds = [
     'album1-006', 'album1-007', 'album1-008', 'album1-009', 'album1-010', 
     'album1-011', 'album1-012', 'album1-013', 'album1-014', 'album1-015', 
     'album9-001', 'album10-001', 
-    'album11-015', 'album12-013', 'album13-012', 'album14-001', 'album15-040',
+    'album11-015', 'album12-013', 'album13-012', 'album14-001', 'album15-040', 'album1-se-custom',
 ];
 
 // ★特効オプションの定義を追記★
@@ -76,7 +76,7 @@ const specialEffectExclusionList = [
     'album1-006', 'album1-007', 'album1-008', 'album1-009', 'album1-010', 
     'album1-011', 'album1-012', 'album1-013', 'album1-014', 'album1-015', 
     'album9-001', 'album10-001', 
-    'album11-015', 'album12-013', 'album13-012', 'album14-001', 'album15-040',
+    'album11-015', 'album12-013', 'album13-012', 'album14-001', 'album15-040', 'album1-se-custom',
 ];
 
 
@@ -2421,21 +2421,27 @@ function updateSlotContent(slotElement, songName, options) {
     const songNameAndOption = document.createElement('div');
     songNameAndOption.classList.add('song-name-and-option');
     
+    // --- 自由入力判定用フラグ ---
+    const isCustom = slotElement.dataset.itemId === 'album1-custom';
+    const isSeCustom = slotElement.dataset.itemId === 'album1-se-custom';
 
-    if (slotElement.dataset.itemId === 'album1-custom') {
-        // ... (自由入力曲のロジックは省略)
+    if (isCustom || isSeCustom) {
+        // IDに応じてデフォルト名とプレースホルダーを切り替え
+        const defaultName = isSeCustom ? 'SE(自由入力)' : '自由入力曲';
+        const placeholderText = isSeCustom ? 'SE名を入力' : '曲名を入力';
+
         const customNameInput = document.createElement('input');
         customNameInput.type = 'text';
         customNameInput.classList.add('custom-song-input');
-        customNameInput.placeholder = '曲名を入力';
+        customNameInput.placeholder = placeholderText;
         
-        if (songName && songName !== '自由入力曲') {
+        if (songName && songName !== defaultName) {
             customNameInput.value = songName;
         }
         
         customNameInput.addEventListener('input', (e) => {
             const newSongName = e.target.value.trim();
-            slotElement.dataset.songName = newSongName || '自由入力曲'; 
+            slotElement.dataset.songName = newSongName || defaultName; 
             console.log(`[custom-song-input] Song name updated to: ${slotElement.dataset.songName}`);
         });
 
@@ -2444,7 +2450,6 @@ function updateSlotContent(slotElement, songName, options) {
             e.stopPropagation();
         });
         
-        // 入力内容を確定するために、blurイベントも追加しておくと良いでしょう。
         customNameInput.addEventListener('blur', () => {
             if (!customNameInput.value.trim()) {
                 customNameInput.value = ''; // 入力が空の場合はplaceholderに戻す
@@ -2466,25 +2471,18 @@ function updateSlotContent(slotElement, songName, options) {
     itemOptions.classList.add('item-options');
 
     let hasAnyCheckboxOption = false;
-    let hasCustomOptions = false; // カスタムオプションが追加されたかを示すフラグ
+    let hasCustomOptions = false; 
     
-    // ★★★ 追加: 自由入力曲 (album1-custom) 専用のプルダウン生成ロジック ★★★
-    
-    if (slotElement.dataset.itemId === 'album1-custom') {
+    // ★★★ 自由入力曲(album1-custom) の場合のみプルダウンを生成 ★★★
+    // SE自由入力(isSeCustom) の場合はここをスキップします
+    if (isCustom) {
         hasCustomOptions = true; 
 
-        /**
-         * カスタムオプションのプルダウンを生成するヘルパー関数
-         * @param {string} datasetKey - data-*属性のキー (例: 'rGt')
-         * @param {Array<Object>} optionsArray - { value: string, label: string } 形式のオプション配列
-         * @returns {HTMLElement} 生成された <select> 要素
-         */
         const createCustomSelect = (datasetKey, optionsArray) => {
             const select = document.createElement('select');
             select.classList.add('custom-option-select');
             select.dataset.optionType = datasetKey;
             
-            // オプションの生成
             optionsArray.forEach(opt => {
                 const optionElement = document.createElement('option');
                 optionElement.value = opt.value;
@@ -2492,88 +2490,59 @@ function updateSlotContent(slotElement, songName, options) {
                 select.appendChild(optionElement);
             });
             
-            // 現在の値をデータ属性から復元
-            // data-rGt, data-lGt, data-bass, data-bpm, data-chorus
-            select.value = slotElement.dataset[datasetKey] || optionsArray[0].value; // デフォルトは配列の最初の値
+            select.value = slotElement.dataset[datasetKey] || optionsArray[0].value;
             
-            // 変更イベントハンドラ
             select.addEventListener('change', (e) => {
                 const selectedValue = e.target.value;
                 slotElement.dataset[datasetKey] = selectedValue;
                 console.log(`[CustomSelectChange] ${datasetKey} updated to: ${selectedValue}`);
-                // 💡 ここで、additional-song-info の表示を再描画する処理を呼び出すのが理想
-                // updateAdditionalInfoDisplay(slotElement);
             });
             
             return select;
         };
         
-        // 🚨 前提: customRGtTuningOptions, customLGtTuningOptions, customBassTuningOptions, customBpmOptions, customChorusOptions は外部で定義済み
-        
-        // R.Gt: customRGtTuningOptions を使用するように修正
         itemOptions.appendChild(createCustomSelect('rGt', customRGtTuningOptions));
-        
-        // L.Gt: customLGtTuningOptions を使用するように修正
         itemOptions.appendChild(createCustomSelect('lGt', customLGtTuningOptions));
-        
-        // Bass
         itemOptions.appendChild(createCustomSelect('bass', customBassTuningOptions));
-        
-        // BPM
         itemOptions.appendChild(createCustomSelect('bpm', customBpmOptions));
-        
-        // コーラス
         itemOptions.appendChild(createCustomSelect('chorus', customChorusOptions));
     }
     
     // Short有無
     if (options.isShortVersion) { 
-    // ... (既存のShort有無のロジックは変更なし) ...
         hasAnyCheckboxOption = true;
         const shortVersionCheckboxWrapper = createCheckboxWrapper('Short', options.short, (e) => { 
             slotElement.dataset.short = e.target.checked.toString();
             slotElement.classList.toggle('short', e.target.checked);
-            console.log(`[CheckboxChange] Slot ${slotElement.dataset.slotIndex} Short status changed to: ${e.target.checked}`);
         });
-        shortVersionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'short';
         itemOptions.appendChild(shortVersionCheckboxWrapper);
     }
 
     // SE有無
     if (options.hasSeOption) { 
-    // ... (既存のSE有無のロジックは変更なし) ...
         hasAnyCheckboxOption = true;
         const seOptionCheckboxWrapper = createCheckboxWrapper('SE有り', options.seChecked, (e) => { 
             slotElement.dataset.seChecked = e.target.checked.toString();
             slotElement.classList.toggle('se-active', e.target.checked);
-            console.log(`[CheckboxChange] Slot ${slotElement.dataset.slotIndex} SE status changed to: ${e.target.checked}`);
         });
-        seOptionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'se';
         itemOptions.appendChild(seOptionCheckboxWrapper);
     }
 
     // ドラムソロ有無
     if (options.drumsoloOption) { 
-    // ... (既存のドラムソロ有無のロジックは変更なし) ...
-        console.log(`[updateSlotContent] Drumsolo option is TRUE for song: ${songName}. Type: ${typeof options.drumsoloOption}`);
         hasAnyCheckboxOption = true;
         const drumsoloOptionCheckboxWrapper = createCheckboxWrapper('ドラムソロ有り', options.drumsoloChecked, (e) => { 
             slotElement.dataset.drumsoloChecked = e.target.checked.toString();
             slotElement.classList.toggle('drumsolo-active', e.target.checked);
-            console.log(`[CheckboxChange] Slot ${slotElement.dataset.slotIndex} ドラムソロ status changed to: ${e.target.checked}`);
         });
-        drumsoloOptionCheckboxWrapper.querySelector('input[type="checkbox"]').dataset.optionType = 'drumsolo';
         itemOptions.appendChild(drumsoloOptionCheckboxWrapper);
-    } else {
-        console.log(`[updateSlotContent] Drumsolo option is FALSE for song: ${songName}. Type: ${typeof options.drumsoloOption}`);
     }
     
-    // ★★★ 特効プルダウンの追加/除外ロジック ★★★
+    // 特効プルダウン
     const currentItemId = slotElement.dataset.itemId;
-    const isSpecialEffectExcluded = specialEffectExclusionList && specialEffectExclusionList.includes(currentItemId);
+    const isSpecialEffectExcluded = (typeof specialEffectExclusionList !== 'undefined') && specialEffectExclusionList.includes(currentItemId);
     
     if (typeof specialEffectOptions !== 'undefined' && !isSpecialEffectExcluded) {
-        // ★特効プルダウンを生成するロジック★
         const specialEffectWrapper = document.createElement('div');
         specialEffectWrapper.classList.add('special-effect-wrapper');
         
@@ -2592,56 +2561,40 @@ function updateSlotContent(slotElement, songName, options) {
         specialEffectSelect.addEventListener('change', (e) => {
             const selectedValue = e.target.value;
             slotElement.dataset.specialEffect = selectedValue;
-            
-            // 選択値に応じてクラスをトグルし、見た目を更新（CSSで実装）
             slotElement.classList.forEach(cls => {
-                if (cls.startsWith('fx-')) {
-                    slotElement.classList.remove(cls);
-                }
+                if (cls.startsWith('fx-')) slotElement.classList.remove(cls);
             });
-            if (selectedValue) {
-                slotElement.classList.add(`fx-${selectedValue}`);
-            }
-            console.log(`[SelectChange] Slot ${slotElement.dataset.slotIndex} Special Effect changed to: ${selectedValue}`);
+            if (selectedValue) slotElement.classList.add(`fx-${selectedValue}`);
         });
         
         specialEffectWrapper.appendChild(specialEffectSelect);
         itemOptions.appendChild(specialEffectWrapper);
-
-    } else if (isSpecialEffectExcluded) {
-        console.log(`[updateSlotContent] Item ID ${currentItemId} is in the exclusion list. Skipping special effect dropdown.`);
-    } else {
-        console.warn("[updateSlotContent] specialEffectOptions is not defined. Skipping special effect dropdown.");
     }
 
-    
-    // 特効プルダウンが存在するかに関わらず、チェックボックスか特効オプション、またはカスタムオプションがあれば itemOptions を追加
+    // itemOptions を追加する判定
     if (hasAnyCheckboxOption || hasCustomOptions || (typeof specialEffectOptions !== 'undefined' && !isSpecialEffectExcluded)) {
         songNameAndOption.appendChild(itemOptions);
     }
 
     songInfoContainer.appendChild(songNameAndOption);
 
-    // Additional Song Info (チューニング, BPM, コーラス)
-    // ... (以下のロジックは変更なし)
-    const additionalInfoDiv = document.createElement('div');
-    additionalInfoDiv.classList.add('additional-song-info');
-    
-    let infoParts = [];
-    
-    // R.Gtの表示チェック: customRGtTuningOptionsを使用
-    if (options.rGt && options.rGt !== customRGtTuningOptions[0].value) infoParts.push(`R.Gt: ${options.rGt}`);
-    // L.Gtの表示チェック: customLGtTuningOptionsを使用
-    if (options.lGt && options.lGt !== customLGtTuningOptions[0].value) infoParts.push(`L.Gt: ${options.lGt}`);
-    
-    // Bass、BPM、コーラスの表示チェック（変更なし）
-    if (options.bass && options.bass !== customBassTuningOptions[0].value) infoParts.push(`Ba: ${options.bass}`);
-    if (options.bpm && options.bpm !== customBpmOptions[0].value) infoParts.push(`BPM: ${options.bpm}`);
-    if (options.chorus && options.chorus !== customChorusOptions[0].value && options.chorus !== 'false') infoParts.push(`コーラス: ${options.chorus}`); 
+    // --- Additional Song Info (SE自由入力の場合は何も表示しない) ---
+    if (!isSeCustom) {
+        const additionalInfoDiv = document.createElement('div');
+        additionalInfoDiv.classList.add('additional-song-info');
+        
+        let infoParts = [];
+        
+        if (options.rGt && options.rGt !== customRGtTuningOptions[0].value) infoParts.push(`R.Gt: ${options.rGt}`);
+        if (options.lGt && options.lGt !== customLGtTuningOptions[0].value) infoParts.push(`L.Gt: ${options.lGt}`);
+        if (options.bass && options.bass !== customBassTuningOptions[0].value) infoParts.push(`Ba: ${options.bass}`);
+        if (options.bpm && options.bpm !== customBpmOptions[0].value) infoParts.push(`BPM: ${options.bpm}`);
+        if (options.chorus && options.chorus !== customChorusOptions[0].value && options.chorus !== 'false') infoParts.push(`コーラス: ${options.chorus}`); 
 
-    if (infoParts.length > 0) {
-        additionalInfoDiv.textContent = infoParts.join(' | ');
-        songInfoContainer.appendChild(additionalInfoDiv);
+        if (infoParts.length > 0) {
+            additionalInfoDiv.textContent = infoParts.join(' | ');
+            songInfoContainer.appendChild(additionalInfoDiv);
+        }
     }
 
     slotElement.appendChild(songInfoContainer);
@@ -2652,6 +2605,81 @@ function updateSlotContent(slotElement, songName, options) {
     dragHandle.textContent = '☰';
     slotElement.appendChild(dragHandle);
 }
+
+
+/**
+ * セットリストの指定されたスロットに曲を追加する。
+ * @param {HTMLElement} slotElement - 曲を追加するセットリストのスロット要素。
+ * @param {string} itemId - 曲のユニークなID。
+ * @param {string} songName - 曲名。
+ * @param {Object} options - 曲のオプション。 (optionsには specialEffect が含まれている必要があります)
+ * @param {string} albumClass - 曲が属するアルバムのクラス名 (例: 'album1', 'album2'。
+ */
+function addSongToSlot(slotElement, itemId, songName, options, albumClass) {
+    console.log(`[addSongToSlot] Adding song ${songName} (${itemId}) to slot ${slotElement.dataset.slotIndex}. Album: ${albumClass}`);
+    console.log(`[addSongToSlot] Options received:`, options);
+
+    // スロットの内容をクリア
+    clearSlotContent(slotElement);
+
+    // 新しい曲要素のデータ属性を設定
+    slotElement.dataset.itemId = itemId;
+    slotElement.dataset.songName = songName;
+    
+    // オプションが「存在しうるか」を示すデータ属性 (dataset.isShortVersionなど)
+    // ここで Boolean 値を文字列 'true' / 'false' に変換して保存
+    slotElement.dataset.isShortVersion = options.isShortVersion ? 'true' : 'false';
+    slotElement.dataset.hasSeOption = options.hasSeOption ? 'true' : 'false';
+    
+    // ★★★ 修正箇所：データ属性名を data-drumsolo-option に変更 ★★★
+    // HTMLの属性名 (data-has-drumsolo-option) とは違う名前 (data-drumsolo-option) で保存することで、
+    // チェックボックス表示ロジック（updateSlotContentなど）が期待する属性名に合わせる
+    slotElement.dataset.drumsoloOption = options.drumsoloOption ? 'true' : 'false'; 
+
+    // チューニングやBPMは文字列としてそのまま保存
+    slotElement.dataset.rGt = options.rGt || ''; 
+    slotElement.dataset.lGt = options.lGt || '';
+    slotElement.dataset.bass = options.bass || '';
+    slotElement.dataset.bpm = options.bpm || '';
+    slotElement.dataset.chorus = options.chorus || 'false'; 
+    
+    // ★★★ 追加：特効の選択状態をデータ属性に保存 ★★★
+    // ロード/移動時は options の値、アルバムからの追加時（options.specialEffectが未定義）は初期値の '' を使用
+    slotElement.dataset.specialEffect = options.specialEffect || ''; 
+
+    // チェックボックスの現在の状態を示すデータ属性
+    slotElement.dataset.short = options.short ? 'true' : 'false';
+    slotElement.dataset.seChecked = options.seChecked ? 'true' : 'false';
+    slotElement.dataset.drumsoloChecked = options.drumsoloChecked ? 'true' : 'false';
+
+    // クラスを追加してスタイルを適用
+    slotElement.classList.add('setlist-item', 'item', albumClass);
+    
+    // チェックボックスの初期状態に応じてクラスも設定
+    slotElement.classList.toggle('short', options.short);
+    slotElement.classList.toggle('se-active', options.seChecked);
+    slotElement.classList.toggle('drumsolo-active', options.drumsoloChecked);
+    
+    // ★★★ 追加：特効の初期状態に応じてクラスも設定 ★★★
+    const currentEffect = slotElement.dataset.specialEffect;
+    if (currentEffect) {
+        slotElement.classList.add(`fx-${currentEffect}`);
+    }
+
+    // スロットの pointer-events を 'auto' に設定（これでタップ・ドラッグ可能になる）
+    slotElement.style.pointerEvents = 'auto';
+    slotElement.style.touchAction = 'pan-y'; // タッチスクロールを許可
+
+    // スロットのコンテンツを更新（曲名やオプションの表示）
+    // updateSlotContent には options オブジェクトをそのまま渡す
+    updateSlotContent(slotElement, songName, options);
+
+    // イベントリスナーの再設定 (コンテンツが更新されたスロットに対して)
+    enableDragAndDrop(slotElement);
+
+    console.log(`[addSongToSlot] Successfully added song ${songName} to slot ${slotElement.dataset.slotIndex}.`);
+}
+
 
 
 
@@ -3466,43 +3494,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 setlistYear.value = "2026";
                 setlistMonth.value = "02";
                 updateDays();
-                setlistDay.value = "04";
-                console.log(`[DOMContentLoaded] Default date set to 2026/02/04.`);
+                setlistDay.value = "22";
+                console.log(`[DOMContentLoaded] Default date set to 2026/02/22.`);
             }
             if (setlistVenue) {
-                setlistVenue.value = "KT Zepp Yokohama 2日目";
-                console.log(`[DOMContentLoaded] Default venue set to KT Zepp Yokohama 2日目.`);
+                setlistVenue.value = "Zepp Haneda 2日目 (克哉生誕祭)";
+                console.log(`[DOMContentLoaded] Default venue set to Zepp Haneda 2日目 (克哉生誕祭).`);
             }
 
             // 初期曲として配置したいアイテムのIDリストとオプション
             const initialItems = [
-                { itemId: "album1-009", options: { drumsoloChecked: true } }, 
+                { itemId: "album1-se-custom", options: { name: "SE(GROUNDED)~ドラムソロ" } },
 
-                { itemId: "album9-006", options: {} }, 
-                { itemId: "album15-043", options: {} }, 
-                { itemId: "album14-002", options: {} }, 
+
+                { itemId: "album8-001", options: {} }, 
+                { itemId: "album13-002", options: {} }, 
+                { itemId: "album2-002", options: {} }, 
                 { itemId: "album14-003", options: {} }, 
-                { itemId: "album4-001", options: {} }, 
-                { itemId: "album6-001", options: {} }, 
+                { itemId: "album15-043", options: {} }, 
+                { itemId: "album9-015", options: {} }, 
 
                 { itemId: "album1-002", options: {} }, 
 
-                { itemId: "album11-001", options: {} }, 
-                { itemId: "album8-010", options: {} }, 
-                { itemId: "album8-003", options: {} }, 
-                { itemId: "album7-001", options: {} }, 
-                { itemId: "album8-011", options: {} }, 
+                { itemId: "album15-019", options: {} }, 
+                { itemId: "album12-006", options: {} }, 
+                { itemId: "album11-007", options: {} }, 
+                { itemId: "album13-001", options: {} }, 
+                { itemId: "album13-009", options: {} }, 
+                { itemId: "album7-006", options: {} }, 
                 { itemId: "album15-044", options: {} }, 
-                { itemId: "album5-003", options: {} }, 
 
-                { itemId: "album1-019", options: {} }, 
+                { itemId: "album1-016", options: {} }, 
                 
-                { itemId: "album9-014", options: {} }, 
-                { itemId: "album10-014", options: {} }, 
+                { itemId: "album15-021", options: {} }, 
                 { itemId: "album14-006", options: {} }, 
-                { itemId: "album14-005", options: {} }, 
+                { itemId: "album14-002", options: {} }, 
+                { itemId: "album12-002", options: {} }, 
                 { itemId: "album14-004", options: {} }, 
-                { itemId: "album11-002", options: {} }, 
+                { itemId: "album9-010", options: {} }, 
 
 
 
